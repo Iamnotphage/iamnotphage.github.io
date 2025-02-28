@@ -1,7 +1,7 @@
 ---
 layout: post
 title: SSH连接远程服务器终极教程
-date: 2024-12-05 11:59:00-0400
+date: 2024-12-05
 description: 本文描述了ssh相关知识，ssh远程连接服务器步骤，以及所有坑的解决方案
 tags: ssh tutorial
 categories: 杂项
@@ -54,8 +54,6 @@ toc:
 然后在`服务`中(运行`services.msc`)找到`OpenSSH 服务器`启动选项设置为`自动`
 
 即可。
-
----
 
 接下来采用命令行安装，如果前面没问题这里可以跳过。
 
@@ -171,8 +169,6 @@ ssh username@192.168.0.194 # username根据自己情况
 首次连接会有连接过程。输入yes继续。
 
 不出意外的话可以连接上
-
----
 
 但是每次都输入`username`和`ip`实在是太麻烦了
 
