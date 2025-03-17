@@ -32,7 +32,7 @@ loop:
         addq    %r10, %rax      # val += ls -&gt; val;
         mrmovq  8(%rdi), %rdi
         jmp     loop
-exit:   
+exit:
         ret
 
 # Stack starts here and grows to lower addresses
@@ -157,13 +157,13 @@ word ifun = [
 	1: imem_ifun;		# Default: get from instruction memory
 ];
 
-bool instr_valid = icode in 
+bool instr_valid = icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	       IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -211,7 +211,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		      IPUSHQ, IRET, IPOPQ, IIADDQ } : valB;
 	icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
@@ -252,7 +252,7 @@ unix <span class="o">&gt;</span> <span class="nb">cd</span> ../ptest<span class=
 </code></pre></div></div> <p>有多个地方用到了这样的一套招数:</p> <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">irmovq</span> <span class="kc">$</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="nv">r10</span>
 <span class="nf">addq</span>   <span class="o">%</span><span class="nv">r10</span><span class="p">,</span> <span class="o">%</span><span class="nb">rax</span>
 </code></pre></div></div> <p>因为原本的<code class="language-plaintext highlighter-rouge">OPq</code>不支持立即数直接和寄存器运算。如果我们实现<code class="language-plaintext highlighter-rouge">iaddq</code>会不会有优化呢？(Let’s figure it out.)</p> <h2 id="实现iaddq">实现IADDQ</h2> <p>这里的实现<code class="language-plaintext highlighter-rouge">iaddq</code>和<code class="language-plaintext highlighter-rouge">Part B</code>的差别不大。</p> <p>记得对照<code class="language-plaintext highlighter-rouge">4.5.7 PIPE各个阶段的实现</code>来修改<code class="language-plaintext highlighter-rouge">pipe-full.hcl</code></p> <h3 id="fetch-stage">Fetch Stage</h3> <p>取指阶段修改三个字段的内容，同<code class="language-plaintext highlighter-rouge">Part B</code>一样：<code class="language-plaintext highlighter-rouge">instr_valid</code>, <code class="language-plaintext highlighter-rouge">need_regids</code>, <code class="language-plaintext highlighter-rouge">need_valC</code>(其他没涉及)</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Is instruction valid?
-bool instr_valid = f_icode in 
+bool instr_valid = f_icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
@@ -266,7 +266,7 @@ word f_stat = [
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -296,7 +296,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		     IPUSHQ, IRET, IPOPQ, IIADDQ } : E_valB;
 	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
