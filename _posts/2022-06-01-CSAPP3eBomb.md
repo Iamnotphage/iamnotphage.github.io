@@ -34,7 +34,7 @@ Macbook使用的M系列芯片是无法使用gdb的，在docker中就算拉取了
   400ef0:	74 05                	je     400ef7 <phase_1+0x17>
   400ef2:	e8 43 05 00 00       	callq  40143a <explode_bomb>
   400ef7:	48 83 c4 08          	add    $0x8,%rsp
-  400efb:	c3                   	retq   
+  400efb:	c3                   	retq
 ```
 
 那么进一步地分析发现，第2个参数就是这里的`mov $0x402400, %esi`
@@ -100,7 +100,7 @@ Border relations with Canada have never been better.
   401492:	7f 05                	jg     401499 <read_six_numbers+0x3d>
   401494:	e8 a1 ff ff ff       	callq  40143a <explode_bomb>
   401499:	48 83 c4 18          	add    $0x18,%rsp
-  40149d:	c3                   	retq   
+  40149d:	c3                   	retq
 ```
 
 其他行没看懂，但是似乎不影响，直接看`explode_bomb`附近的内容，很明显在调用`__isoc99_sscanf@plt`之后的结果`%eax`需要和5做比较，如果大于的话就跳过爆炸阶段，明显是对初步输入参数个数的判断，再加上望文生义，很明显答案是6个数字。
@@ -116,7 +116,7 @@ Border relations with Canada have never been better.
 
 经过上述测试，确实是需要输入6个数字(不能输入字符，否则`%eax`并不记录)。
 
-*如果你发现eax此处小于6，那就不要`si`或者`s`等步进操作了，会爆炸的*
+_如果你发现eax此处小于6，那就不要`si`或者`s`等步进操作了，会爆炸的_
 
 那么后续输入过程中一定要谨慎输入参数，避免爆炸。
 
@@ -129,6 +129,7 @@ Border relations with Canada have never been better.
 (gdb) r
 (gdb) i r
 ```
+
 谨小慎微的`si`步进(不是`s`，一定要汇编级别的步进，否则可能步进多了会爆炸)
 
 然后`x/d`发现其实输入的6个数是在`%rsp, 4(%rsp), 8(%rsp), ..., 20(%rsp)`所指向的内存里。可以输入`97 98 99 100 101 102`来测试(ASCII的abcdef)
@@ -261,7 +262,7 @@ Border relations with Canada have never been better.
   400fc2:	74 05                	je     400fc9 <phase_3+0x86>
   400fc4:	e8 71 04 00 00       	callq  40143a <explode_bomb>
   400fc9:	48 83 c4 18          	add    $0x18,%rsp
-  400fcd:	c3                   	retq   
+  400fcd:	c3                   	retq
 ```
 
 最后殊途同归在`0x400fbe`检查第二个数(`0xc(%rsp)`)
@@ -309,7 +310,7 @@ Phase4调用了`func4()`，并且在调用之前初始化了三个参数:`edi`,`
   401056:	74 05                	je     40105d <phase_4+0x51>
   401058:	e8 dd 03 00 00       	callq  40143a <explode_bomb>
   40105d:	48 83 c4 18          	add    $0x18,%rsp
-  401061:	c3                   	retq   
+  401061:	c3                   	retq
 ```
 
 调用结束后，检查返回值`%eax`，如果返回值为非0的话将会爆炸。所以`func4`的返回值要为0(JNE跳转，当且仅当ZF = 0时，所以TEST的结果要为0，才会将ZF = 1)
@@ -339,20 +340,20 @@ Phase4调用了`func4()`，并且在调用之前初始化了三个参数:`edi`,`
   400ffe:	e8 cb ff ff ff       	callq  400fce <func4>
   401003:	8d 44 00 01          	lea    0x1(%rax,%rax,1),%eax
   401007:	48 83 c4 08          	add    $0x8,%rsp
-  40100b:	c3                   	retq   
+  40100b:	c3                   	retq
 ```
 
 发现这是一个递归的函数。
 
 做个草稿简化说明：
 
-|寄存器|变量|
-|---|---|
-|%edi|x1|
-|%esi|x2|
-|%edx|x3|
-|%ecx|x4|
-|%eax|t|
+| 寄存器 | 变量 |
+| ------ | ---- |
+| %edi   | x1   |
+| %esi   | x2   |
+| %edx   | x3   |
+| %ecx   | x4   |
+| %eax   | t    |
 
 ```cpp
 int func4(int x1, int x2, int x3) {
@@ -362,7 +363,7 @@ int func4(int x1, int x2, int x3) {
     t = t + x4;
     t = t >> 1; // arithmetical shift
     x4 = t + x2;
-    
+
     if (x4 <= x1) {
         t = 0;
         if (x4 >= x1) {
@@ -398,8 +399,9 @@ int main() {
   401056:	74 05                	je     40105d <phase_4+0x51>
   401058:	e8 dd 03 00 00       	callq  40143a <explode_bomb>
   40105d:	48 83 c4 18          	add    $0x18,%rsp
-  401061:	c3                   	retq   
+  401061:	c3                   	retq
 ```
+
 这里的`cmpl`就是在对比第二个输入和0的关系，很显然第二个答案是0
 
 所以答案是:
@@ -523,10 +525,10 @@ int main() {
 
 那么最容易想到的就是直接从ASCII码表里面选。
 
-|9|F|E|5|6|7|
-|---|---|---|---|---|---|
-|i|o|n|e|f|g|
-|y|-|-|u|v|w|
+| 9   | F   | E   | 5   | 6   | 7   |
+| --- | --- | --- | --- | --- | --- |
+| i   | o   | n   | e   | f   | g   |
+| y   | -   | -   | u   | v   | w   |
 
 ASCII码表设计的问题，大小写均符合上表
 
@@ -621,18 +623,18 @@ yonefg
   40119f:	b8 01 00 00 00       	mov    $0x1,%eax
   4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx
   4011a9:	eb cb                	jmp    401176 <phase_6+0x82>
-````
+```
 
 通过gdb调试，可以找到对应内存区域中有一条链表:
 
-|node|address|value|
-|---|---|---|
-|node1|0x6032d0|322|
-|node2|0x6032e0|168|
-|node3|0x6032f0|924|
-|node4|0x603300|691|
-|node5|0x603310|477|
-|node6|0x603320|443|
+| node  | address  | value |
+| ----- | -------- | ----- |
+| node1 | 0x6032d0 | 322   |
+| node2 | 0x6032e0 | 168   |
+| node3 | 0x6032f0 | 924   |
+| node4 | 0x603300 | 691   |
+| node5 | 0x603310 | 477   |
+| node6 | 0x603320 | 443   |
 
 而每个结点所在地址加上`0x8`就是`next`的值域
 
@@ -670,7 +672,7 @@ yonefg
   4011cd:	48 89 d1             	mov    %rdx,%rcx
   4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>
   4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)
-  4011d9:	00 
+  4011d9:	00
 ```
 
 这里不断进行`$rdx -> ($rcx + 0x8)`也就是对next值域进行赋值。从而构造按照part3所排序的顺序成链(`7 - xi`的顺序)

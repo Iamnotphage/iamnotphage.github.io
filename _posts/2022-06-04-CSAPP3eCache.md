@@ -31,14 +31,14 @@ yum install python2  # 后续./driver.py时是python2
 在`writeup`中给出了例子:
 
 ```bash
-[root@5fd2dc6af315 cache]# ./csim-ref -v -s 4 -E 1 -b 4 -t traces/yi.trace 
-L 10,1 miss 
-M 20,1 miss hit 
-L 22,1 hit 
-S 18,1 hit 
-L 110,1 miss eviction 
-L 210,1 miss eviction 
-M 12,1 miss eviction hit 
+[root@5fd2dc6af315 cache]# ./csim-ref -v -s 4 -E 1 -b 4 -t traces/yi.trace
+L 10,1 miss
+M 20,1 miss hit
+L 22,1 hit
+S 18,1 hit
+L 110,1 miss eviction
+L 210,1 miss eviction
+M 12,1 miss eviction hit
 hits:4 misses:5 evictions:3
 ```
 
@@ -52,9 +52,9 @@ hits:4 misses:5 evictions:3
 
 所以地址分段应该是这样:
 
-|t|s|b|
-|-|-|-|
-|56|4|4|
+| t   | s   | b   |
+| --- | --- | --- |
+| 56  | 4   | 4   |
 
 所以这个cache有16组，每组1行，一行的数据块有16个。
 
@@ -72,13 +72,13 @@ miss之后，将内存`0x10`开始的内容加载到cache中
 
 对于编写`csim.c`有以下要求:
 
-* 开头注释标明姓名和ID
-* 不能有任何警告
-* 对于任意参数s,E,b都能正确工作
-* 忽略`trace`中的所有取指信息(`I`开头的)
-* 最后必须调用`printSummary()`统计信息
-* 在本实验中，您应假设内存访问已正确对齐，因此单次内存访问绝不会跨越块边界。有了这个假设，你就可以忽略 valgrind 跟踪中的请求大小。
-  
+- 开头注释标明姓名和ID
+- 不能有任何警告
+- 对于任意参数s,E,b都能正确工作
+- 忽略`trace`中的所有取指信息(`I`开头的)
+- 最后必须调用`printSummary()`统计信息
+- 在本实验中，您应假设内存访问已正确对齐，因此单次内存访问绝不会跨越块边界。有了这个假设，你就可以忽略 valgrind 跟踪中的请求大小。
+
 而且eviction要满足LRU
 
 这不就是leetcode的LRU题么
@@ -87,10 +87,10 @@ miss之后，将内存`0x10`开始的内容加载到cache中
 
 在Part A开始之前，`writeup`有几个建议:
 
-* 可以先在小的trace文件进行debug
-* 推荐实现`-v`选项，毕竟方便debug
-* 推荐使用`getopt.h`来解析参数(一般shell程序用这个来解析args)
-* 每次数据加载 (L) 或存储 (S) 操作最多只能导致一次cache miss。数据修改操作 (M) 被视为加载然后存储到同一地址的操作。因此，一个 M 操作可能会导致两次缓存hits，或一次miss和一次hit加上一次可能的eviction。
+- 可以先在小的trace文件进行debug
+- 推荐实现`-v`选项，毕竟方便debug
+- 推荐使用`getopt.h`来解析参数(一般shell程序用这个来解析args)
+- 每次数据加载 (L) 或存储 (S) 操作最多只能导致一次cache miss。数据修改操作 (M) 被视为加载然后存储到同一地址的操作。因此，一个 M 操作可能会导致两次缓存hits，或一次miss和一次hit加上一次可能的eviction。
 
 解析参数参考一下`getopt()`函数很容易写出
 
@@ -104,7 +104,7 @@ int misses = 0;
 int evictions = 0;
 
 /**
- * @brief This is a cache line, which line has a valid bit, tags and blocks. 
+ * @brief This is a cache line, which line has a valid bit, tags and blocks.
  */
 struct cacheRow {
     int valid;  /** valid bit */
@@ -150,7 +150,7 @@ deque* deques;
 
 /**
  * @brief Add the node to head of a deque.
- * 
+ *
  * @param[in] dq deque
  * @param[in] node node
  */
@@ -164,7 +164,7 @@ void addToHead(deque* dq, node* node) {
 
 /**
  * @brief Remove a node from its deque.
- * 
+ *
  * @param[in] node node
  */
 void removeNode(node* node) {
@@ -174,7 +174,7 @@ void removeNode(node* node) {
 
 /**
  * @brief Move a node to its deque's head.
- * 
+ *
  * @param[in] dq deque
  * @param[in] node node
  */
@@ -185,9 +185,9 @@ void moveToHead(deque* dq, node* node) {
 
 /**
  * @brief Remove a tail from a deque.
- * 
+ *
  * @param[in] dq deque
- * 
+ *
  * @return the tail node
  */
 node* removeTail(deque* dq) {
@@ -204,7 +204,7 @@ node* removeTail(deque* dq) {
 ```c
 /**
  * @brief Initialize cache
- * 
+ *
  * @param[in] s set bits
  * @param[in] E lines per line
  */
@@ -250,9 +250,9 @@ struct traceLine {
 
 /**
  * @brief Parse the trace line to get op and address.
- * 
+ *
  * @param[in] line a line of trace info
- * 
+ *
  * @return operation and address
  */
 struct traceLine* parseTraces(char* line) {
@@ -293,7 +293,7 @@ struct traceLine* parseTraces(char* line) {
 ```c
 /**
  * @brief Simulate cache
- * 
+ *
  * @param[in] line trace info
  * @param[in] s set bits
  * @param[in] E lines per set
@@ -414,9 +414,9 @@ Points (s,E,b)    Hits  Misses  Evicts    Hits  Misses  Evicts
 
 将会对三组尺寸的矩阵进行测试:
 
-1. 32 * 32
-2. 64 * 64
-3. 61 * 67
+1. 32 \* 32
+2. 64 \* 64
+3. 61 \* 67
 
 并且`writeup`给出了对于矩阵乘法的`blocking`思想，[详见这里](http://csapp.cs.cmu.edu/public/waside/waside-blocking.pdf)
 
@@ -480,16 +480,16 @@ func 0 (Transpose submission): hits:1710, misses:343, evictions:311
 
 比如: (方括号中表示二进制数)
 
-* 假设矩阵A的起始地址是 [0 0100 0000 0000] set index字段为 00000
-* 假设矩阵B的起始地址是 [1 0100 0000 0000] set index字段为 00000
-* 假设仍然分16块，当A的第一个小块的第一行被加载到cache中时
-* A[0][0] ~ A[0][7]均被加入到cache的第0行
-* 接下来复制给B矩阵，当访问B矩阵的第一块的第一列时
-* B[0][0] ~ B[0][7]均被加入到cache的第0行
-* 此时发现set index相同但是tag不同，于是miss eviction!
-* 然后A[0][1]赋值给B[1][0]找A[0][1]的时候又miss eviction!
-* 并且就算是差别很大的两个地址，仍然会有冲突的时候，因为s字段每32个字节加1，也就是每8个int就会加1
-* 而最小的尺寸就是32 * 32，这意味着两个矩阵无论如何都会存在s字段相同的地址
+- 假设矩阵A的起始地址是 [0 0100 0000 0000] set index字段为 00000
+- 假设矩阵B的起始地址是 [1 0100 0000 0000] set index字段为 00000
+- 假设仍然分16块，当A的第一个小块的第一行被加载到cache中时
+- A[0][0] ~ A[0][7]均被加入到cache的第0行
+- 接下来复制给B矩阵，当访问B矩阵的第一块的第一列时
+- B[0][0] ~ B[0][7]均被加入到cache的第0行
+- 此时发现set index相同但是tag不同，于是miss eviction!
+- 然后A[0][1]赋值给B[1][0]找A[0][1]的时候又miss eviction!
+- 并且就算是差别很大的两个地址，仍然会有冲突的时候，因为s字段每32个字节加1，也就是每8个int就会加1
+- 而最小的尺寸就是32 \* 32，这意味着两个矩阵无论如何都会存在s字段相同的地址
 
 那么很自然的我们可以先存到program stack中，也就是利用程序栈中的某些字段(变量)来存储
 
@@ -529,9 +529,9 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 
 ---
 
-对于64 * 64的尺寸，这里变得有点困难，按照前面的思路并且经过测试misses是绝对会超过阈值的。
+对于64 \* 64的尺寸，这里变得有点困难，按照前面的思路并且经过测试misses是绝对会超过阈值的。
 
-如果继续以8 * 8为小块分块，将会有64块小块。而且因为尺寸变大，这里小块的前四行就会把cache占满(1行A小块7行B列，共4组32行占满)。
+如果继续以8 \* 8为小块分块，将会有64块小块。而且因为尺寸变大，这里小块的前四行就会把cache占满(1行A小块7行B列，共4组32行占满)。
 
 难道真的回天乏术了吗？
 
@@ -541,9 +541,9 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 
 也就是可能需要利用B矩阵在cache中的内容作为一个类似buffer的角色。
 
-对于一个8 * 8的小块，在内部继续划分成4个小块，一个小块是4 * 4，记小小块的id为0，1，2，3
+对于一个8 _ 8的小块，在内部继续划分成4个小块，一个小块是4 _ 4，记小小块的id为0，1，2，3
 
-对于一个8 * 8的小块，其转置过程如下:
+对于一个8 \* 8的小块，其转置过程如下:
 
 1. A块0正常转置到B的块0
 2. A块1转置暂存到B的块1（正常应该是B的块3）
@@ -552,11 +552,11 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 5. 临时变量赋值给B的块3
 6. 最后正常转置A的块3到B的块2
 
-然后对于每个8 * 8小块都执行上述操作。图片可以参考[这里](https://www.zixiangcode.top/article/csapp-cachelab#0aa5043cbefd40c29de6dcaf4eed542a)的笔记
+然后对于每个8 \* 8小块都执行上述操作。图片可以参考[这里](https://www.zixiangcode.top/article/csapp-cachelab#0aa5043cbefd40c29de6dcaf4eed542a)的笔记
 
 ```c
 void transpose_64x64(int M, int N, int A[N][M], int B[M][N])
-{   
+{
     int a0, a1, a2, a3, a4, a5, a6, a7;
     for (int i = 0; i < N; i += 8) {
         for (int j = 0; j < M; j += 8) {
@@ -639,7 +639,7 @@ ok，misses < 1300
 
 ---
 
-最后是 61 * 67尺寸的矩阵转置
+最后是 61 \* 67尺寸的矩阵转置
 
 尝试几次不同的分块暴力转置就行了
 

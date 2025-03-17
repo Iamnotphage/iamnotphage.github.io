@@ -16,6 +16,7 @@ toc:
 西电CS学生自救指南，包含计组、计网、OS的学习指南。
 
 # 前言
+
     感觉高校的课程都是一坨...一言难尽。
 
 用着白垩纪的ppt和课本，津津有味地嚼着答辩。
@@ -36,8 +37,8 @@ git clone https://github.com/Iamnotphage/CS-SurvivalGuide
 
 3.国内阿里云盘地址(不想搞)
 
-
 # 计算机组织和体系结构/组成原理
+
 学分最多的一集，千万要谨记这门课5.5学分。我的老师其实没啥大问题，就是经常补课，而且讲的比较慢。
 
     内容是真他妈多。
@@ -49,9 +50,11 @@ git clone https://github.com/Iamnotphage/CS-SurvivalGuide
 6月23日补档，昨天晚上出的成绩总评92，期中94、期末92，实验89，算是符合预期吧（（整学期没听过课我个人觉得已经很不错了 5/109）。
 
 ## 详情
+
 [Click Here](/sources/ComputerArchitecture/Architecture.md)
 
 # 计算机网络
+
     最逆天的一集。
 
 生平第一次见到老师翘课，曾经创下一节课讲十章的神话，期中没考试问我们期中考的怎么样，甚至可以学到让步状语从句。（甚至多次登错成绩）
@@ -63,10 +66,11 @@ git clone https://github.com/Iamnotphage/CS-SurvivalGuide
 6月23补档，期末考88，实验89.9（奇怪的数字）最后总评88（可以说这是从头到尾自学的一门课了，这样子知足了。最后排名3/71那只能说老师不够给力了）
 
 ## 详情
+
 [Click Here](/sources/ComputerNetworking/Networking.md)
 
-
 # 操作系统
+
     这学期唯一正常的老师。
 
 这门课还好（就考核而言），有点就是八股文，缺点也是如此，这就导致难以深入理解操作系统。
@@ -74,4 +78,5 @@ git clone https://github.com/Iamnotphage/CS-SurvivalGuide
 23年6月19补档，期末考刚结束，回忆一下跟往年不同的地方吧，首先选择题有一个FAT簇的分配问题，其他选择没啥特别的；大题的话，第一题是磁盘调度，考了个SCAN算法的，第二题死锁的资源图化简，第三题多级队列循环调度（这个点往年没考过），第四题银行家算法，第五题虚存相关内容、然后是缺页的置换算法LRU FIFO啥的，第六题是UNIX的文件打开的那题（稍微不同的是要求画出磁盘索引区），第七题多道程序的作业调度，计算平均周转时间和周转系数，细心即可。
 
 ## 详情
+
 [Click Here](/sources/OperatingSystem/OS.md)

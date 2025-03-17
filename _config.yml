@@ -4,7 +4,7 @@
 
 title: blank # the website title (if blank, full name will be used instead)
 first_name: Chen
-middle_name: 
+middle_name:
 last_name: Yeung
 email: iamnotphage@163.com
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
@@ -309,7 +309,7 @@ jekyll-archives:
     tag: "/blog/tag/:name/"
     category: "/blog/category/:name/"
 
-display_tags: ["c", "cpp", "java", "python", "math", "code" ] # these tags will be displayed on the front page of your blog
+display_tags: ["c", "cpp", "java", "python", "math", "code"] # these tags will be displayed on the front page of your blog
 display_categories: ["西电相关", "CSAPP", "项目"] # these categories will be displayed on the front page of your blog
 
 # -----------------------------------------------------------------------------

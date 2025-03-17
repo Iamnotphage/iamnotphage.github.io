@@ -192,20 +192,13 @@
       "name": "Math",
       "level": "Noob",
       "icon": "fa-solid fa-hashtag",
-      "keywords": [
-        "Calculus",
-        "Linear Algebra",
-        "Probability Theory",
-        "Graph Theory"
-      ]
+      "keywords": ["Calculus", "Linear Algebra", "Probability Theory", "Graph Theory"]
     },
     {
       "name": "Rubike's Cube",
       "level": "Noob",
       "icon": "fa-solid fa-hashtag",
-      "keywords": [
-        "13s on average."
-      ]
+      "keywords": ["13s on average."]
     }
   ],
   "languages": [
@@ -224,23 +217,17 @@
     {
       "name": "Math",
       "icon": "fa-solid fa-tag",
-      "keywords": [
-        "ANYTHING"
-      ]
+      "keywords": ["ANYTHING"]
     },
     {
       "name": "Physics",
       "icon": "fa-solid fa-tag",
-      "keywords": [
-        "ANYTHING"
-      ]
+      "keywords": ["ANYTHING"]
     },
     {
       "name": "Programing",
       "icon": "fa-solid fa-tag",
-      "keywords": [
-        "ANYTHING"
-      ]
+      "keywords": ["ANYTHING"]
     },
     {
       "name": "Gaming",

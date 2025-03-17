@@ -15,15 +15,14 @@ toc:
 
 本人测试设备:
 
-* Macbook (Apple Silicon)
-* Windows11 笔记本
+- Macbook (Apple Silicon)
+- Windows11 笔记本
 
 阅读并理解本文需要的前置知识或技能:
 
-* Linux基础命令(`|`, `grep`等)
-* 科学上网
-* 清楚知道自己主机登陆账户和密码(Windows上不是PIN码，而是登陆密码!)
-
+- Linux基础命令(`|`, `grep`等)
+- 科学上网
+- 清楚知道自己主机登陆账户和密码(Windows上不是PIN码，而是登陆密码!)
 
 # SSH 科普
 
@@ -121,7 +120,6 @@ systemctl status sshd # 确保安装
 
 在服务器上，有两组文件夹需要注意:
 
-
 | 特性     | C:\Users\[name]\.ssh\           | C:\ProgramData\ssh          |
 | -------- | ------------------------------- | --------------------------- |
 | 级别     | 用户级别                        | 系统级别                    |
@@ -204,7 +202,7 @@ ssh LAN-WIN
 
 我想大部分情况都不是局域网吧，所以需要内网穿透。
 
-*让我想起小时候用蛤蟆吃联机 缅怀Hamachi。*
+_让我想起小时候用蛤蟆吃联机 缅怀Hamachi。_
 
 这里不多详解了，我个人用的是`Sakura FRP`这个软件
 
@@ -285,4 +283,3 @@ ssh-keygen -R [name] # 这里填写自己的域名
 ```
 
 是在不行就删除`C:/ProgramData/ssh`文件夹重启sshd服务。
-

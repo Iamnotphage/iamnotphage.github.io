@@ -70,7 +70,7 @@ loop:
         addq    %r10, %rax      # val += ls -> val;
         mrmovq  8(%rdi), %rdi
         jmp     loop
-exit:   
+exit:
         ret
 
 # Stack starts here and grows to lower addresses
@@ -198,9 +198,9 @@ stack:
 
 表格一列代表4bit
 
-|0|1|2|3|4|5|...|19|
-|--|--|--|--|--|--|--|--|
-|icode|ifun|rA|rB|||||
+| 0     | 1    | 2   | 3   | 4   | 5   | ... | 19  |
+| ----- | ---- | --- | --- | --- | --- | --- | --- |
+| icode | ifun | rA  | rB  |     |     |     |     |
 
 后续的空格代表立即数(64bit)
 
@@ -261,13 +261,13 @@ word ifun = [
 	1: imem_ifun;		# Default: get from instruction memory
 ];
 
-bool instr_valid = icode in 
+bool instr_valid = icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	       IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -333,7 +333,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		      IPUSHQ, IRET, IPOPQ, IIADDQ } : valB;
 	icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
@@ -362,6 +362,7 @@ bool set_cc = icode in { IOPQ, IIADDQ };
 最后make，测试就行。
 
 in `sim/seq`
+
 ```bash
 unix > make clean
 unix > make VERSION=full
@@ -427,7 +428,7 @@ addq   %r10, %rax
 
 ```text
 # Is instruction valid?
-bool instr_valid = f_icode in 
+bool instr_valid = f_icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	  IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ, IIADDQ };
 
@@ -441,7 +442,7 @@ word f_stat = [
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	f_icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ, IIADDQ };
 
 # Does fetched instruction require a constant word?
@@ -485,7 +486,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		     IPUSHQ, IRET, IPOPQ, IIADDQ } : E_valB;
 	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
