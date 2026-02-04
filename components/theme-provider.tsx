@@ -19,13 +19,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
     // 从 localStorage 获取主题，如果没有则使用系统偏好
     const savedTheme = localStorage.getItem("theme") as Theme | null;
     if (savedTheme) {
-      setTheme(savedTheme);
+      queueMicrotask(() => setTheme(savedTheme));
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
+      queueMicrotask(() => setTheme("dark"));
     }
   }, []);
 

@@ -24,7 +24,7 @@ export function BlogTableOfContents() {
       const level = parseInt(el.tagName.charAt(1), 10)
       list.push({ id, text, level })
     })
-    setItems(list)
+    queueMicrotask(() => setItems(list))
 
     const observer = new IntersectionObserver(
       (entries) => {

@@ -54,11 +54,11 @@ export function BlogSearchModal({
   }, [])
 
   useEffect(() => {
-    if (open) openSearch()
+    if (open) queueMicrotask(() => openSearch())
   }, [open, openSearch])
 
   useEffect(() => {
-    setSelectedIndex(-1)
+    queueMicrotask(() => setSelectedIndex(-1))
   }, [query])
 
   useEffect(() => {

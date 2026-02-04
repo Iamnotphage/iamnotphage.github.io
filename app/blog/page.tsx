@@ -50,7 +50,10 @@ function BlogPageContent() {
 
   function buildFilterHref(updates: { category?: string | null }) {
     const p = new URLSearchParams(searchParams.toString())
-    if ('category' in updates) (updates.category ? p.set('category', updates.category) : p.delete('category'))
+    if ('category' in updates) {
+      if (updates.category) p.set('category', updates.category)
+      else p.delete('category')
+    }
     p.delete('page')
     const s = p.toString()
     return s ? `/blog?${s}` : '/blog'

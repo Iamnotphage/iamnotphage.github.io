@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import * as runtime from 'react/jsx-runtime'
 import { ComponentProps, useCallback, useEffect, useMemo, useState } from 'react'
 import { Children, isValidElement } from 'react'
@@ -350,12 +351,21 @@ function Li({ children, ...props }: ComponentProps<'li'>) {
 const imgBaseClass =
   'my-6 block h-auto max-w-[min(100%,42rem)] mx-auto rounded-lg'
 
-function Img({ className, alt, ...props }: ComponentProps<'img'>) {
+function Img({ className, alt, src, width, height, ...props }: ComponentProps<'img'>) {
+  if (!src || typeof src !== 'string') {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- fallback when src missing
+      <img {...props} src={src} alt={alt ?? ''} className={cn(imgBaseClass, className)} />
+    )
+  }
   return (
-    <img
-      {...props}
+    <Image
+      src={src}
       alt={alt ?? ''}
+      width={typeof width === 'number' ? width : 800}
+      height={typeof height === 'number' ? height : 600}
       className={cn(imgBaseClass, className)}
+      unoptimized
     />
   )
 }
@@ -385,7 +395,7 @@ const components = {
   li: Li,
 }
 
-const useMDXComponent = (code: string) => {
+function getMDXComponent(code: string) {
   const fn = new Function(code)
   return fn({ ...runtime }).default
 }
@@ -395,6 +405,9 @@ interface MDXContentProps {
 }
 
 export function MDXContent({ code }: MDXContentProps) {
-  const Component = useMDXComponent(code)
+  // MDX 运行时从 code 编译出组件，必须在 render 中解析；用 useMemo 稳定引用
+  /* eslint-disable react-hooks/static-components -- MDX compiles code to component at runtime */
+  const Component = useMemo(() => getMDXComponent(code), [code])
   return <Component components={components} />
+  /* eslint-enable react-hooks/static-components */
 }

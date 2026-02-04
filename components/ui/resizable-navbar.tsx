@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import {
@@ -236,10 +237,12 @@ export const MobileNavHeader = ({
   );
 };
 
+// onClose 保留在 API 中供调用方使用，当前菜单实现未使用
 export const MobileNavMenu = ({
   children,
   className,
   isOpen,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- 保留 API 一致性
   onClose,
 }: MobileNavMenuProps) => {
   return (
@@ -281,11 +284,12 @@ export const NavbarLogo = () => {
       href="#"
       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
     >
-      <img
+      <Image
         src="https://assets.aceternity.com/logo-dark.png"
         alt="logo"
         width={30}
         height={30}
+        unoptimized
       />
       <span className="font-medium text-black dark:text-white">Startup</span>
     </a>
