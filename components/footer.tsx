@@ -35,7 +35,7 @@ const navLinks = [
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Favorites", href: "/favorites" },
-  { label: "The World", href: "/the-world" },
+  { label: "「The World」", href: "/the-world" },
 ];
 
 const socialLinks = [
