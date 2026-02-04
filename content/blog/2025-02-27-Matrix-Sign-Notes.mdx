@@ -1,0 +1,328 @@
+---
+title: 向量和矩阵各种乘积以及其对应的numpy库API解释
+date: 2025-02-27
+description: 一文解释清楚点乘、叉乘、矩阵乘法、Hadamard乘积等以及对应Numpy接口
+tags: ["python", "numpy", "math", "linear", "matrix"]
+categories: ["杂项", "深度学习"]
+published: true
+giscus_comments: true
+toc: true
+---
+
+在学习cs231n关于反向传播矩阵求导的时候发现这部分内容非常绕，并且numpy对应的接口也有很多，在这里记录笔记分辨各类矩阵乘法的内容。
+
+下面主要解释各类乘积的别名、常用符号、含义以及对应的常用的numpy接口。
+
+> 本文暂不考虑复数域的情况，并且将严格按照wikipedia的定义以及[numpy API reference](https://numpy.org/doc/stable/reference/routines.linalg.html)阐述
+
+# 前置知识
+
+首先有必要指出几个必须认识的名词:
+
+- 标量: scalar
+- 向量: vector
+- 矩阵: matrix
+- 张量: tensor (区别于物理学上的张量)
+
+此外`numpy`库中经常声明类型为`ndarray`的变量，在阅读之前，有必要了解其中的属性。
+
+1. shape: 通常是一个元组，如果是(,N)或者(N,)则代表向量 (N,M)代表二维的矩阵
+2. ndim: 这个`ndarray`的维度
+
+比如:
+
+```python
+>>> import numpy as np
+>>> a = np.array([1,2,3])
+>>> a.shape
+(3,)
+>>> a.ndim  # number of dimentions
+1           # 一维的向量（不是矩阵）
+>>> c = np.array([[1,2,3]])
+>>> c.ndim
+2           # 二维 也就是矩阵
+>>> c.shape
+(1, 3)      # 1x3的矩阵
+>>> tensorA = np.array([i for i in range(12)]).reshape([2,2,3])
+>>> tensorA
+array([[[ 0,  1,  2],
+        [ 3,  4,  5]],
+
+       [[ 6,  7,  8],
+        [ 9, 10, 11]]])
+>>> tensorA.shape
+(2, 2, 3)   # 2个2x3的矩阵组成的Tensor
+>>> tensorA.ndim
+3           # 三维
+>>> test = np.array([[[[[1,2,3,4]]]]])
+>>> test
+array([[[[[1, 2, 3, 4]]]]])
+>>> test.shape
+(1, 1, 1, 1, 4)
+>>> test.ndim
+5           # 仔细看左括号的数量就知道几维了 最后两个维度是1x4
+```
+
+# 点乘
+
+点乘(**dot product**)是定义在两个**向量**之间的运算，也就是矩阵之间**严格来说没有矩阵点乘**这种说法
+
+| 别名                               | 英文                           | 数学符号   | numpy API                                       |
+| ---------------------------------- | ------------------------------ | ---------- | ----------------------------------------------- |
+| **点积**、**内积**、数量积、标量积 | **dot product**、inner product | $a\cdot b$ | `numpy.dot`、`numpy.inner`、`numpy.matmul`、`@` |
+
+> 个人喜好不太推荐用numpy.matmul和@，因为他们本身就是表示矩阵乘法
+
+eg. 数值定义如下
+
+向量 $\vec{a}=[a_1, a_2, \cdots, a_n]$ 和 $\vec{b}=[b_1, b_2, \cdots, b_n]$ 的点乘结果是(一个**标量**)：
+
+$$\vec{a}\cdot \vec{b} = \sum_{i=1}^n a_ib_i = a_1b_1 + a_2b_2 + \cdots + a_nb_n$$
+
+此外几何定义自行查看高中内容，此处不多赘述
+
+numpy例子:
+
+```python
+>>> import numpy as np
+>>> a = np.array([1,2,3]) # 注意这里定义的是1维的向量
+>>> b = np.array([0,1,0])
+>>> np.dot(a, b)    # 更推荐
+2
+>>> np.inner(a, b)  # 更推荐
+2
+>>> np.matmul(a,b)
+2
+>>> a @ b # @ 运算符等价于np.matmul()
+2
+```
+
+前两个`np.dot`和`np.inner`根据函数名也容易理解是在计算点乘（内积）
+
+并且`numpy`文档也写的很清楚:
+
+(下文的`1-D arrays`指的是维度为`1`的`ndarray`，也就是所谓的`vector`)
+
+```python
+numpy.dot(a, b, out=None)
+# Dot product of two arrays. Specifically,
+# If both a and b are 1-D arrays, it is
+# inner product of vectors (without complex conjugation).
+
+numpy.inner(a, b, /)
+# Inner product of two arrays.
+# Ordinary inner product of vectors for 1-D arrays
+# (without complex conjugation), in higher dimensions a
+# sum product over the last axes.
+```
+
+但是为什么后面两个，`np.matmul`和`@`运算符却同样能给出点乘答案？
+
+首先，`@`运算符等价于`np.matmul`，所以这里解释`np.matmul`:
+
+> If the first argument is 1-D, it is promoted to a matrix
+> by **prepending** a 1 to its dimensions. After matrix multiplication
+> the prepended 1 is removed. (For stacks of vectors, use vecmat.)
+
+> If the second argument is 1-D, it is promoted to a matrix
+> by **appending** a 1 to its dimensions. After matrix multiplication
+> the appended 1 is removed. (For stacks of vectors, use matvec.)
+
+注意这里的`prepending`和`appending`
+
+这里说了，如果第一个参数是`1-D`也就是一维的话，那么会`prepending`一个`1`扩充成矩阵，变成`shape`为`(1,N)`
+
+第二个参数是`1-D`也就是一维的话，那么会`appending`一个`1`扩充成矩阵，变成`shape`为`(N,1)`
+
+那么这里不就恰好变成两个矩阵相乘得到`(1,1)`的矩阵，同时移除这个维度，变成了一个`scalar`也就是标量
+
+所以严格来说，不是`numpy.matmul`和`@`能计算点乘，而是因为`matmul`对一维输入的特殊处理，恰好算出来点乘。
+
+# 叉乘
+
+叉乘(**cross product**)同样是定义在**两个向量**之间的运算，是对三维空间中的**两个向量**的二元运算，所以矩阵之间也是不存在叉乘的说法的
+
+| 别名                       | 英文                                                                   | 数学符号                   | numpy API                    |
+| -------------------------- | ---------------------------------------------------------------------- | -------------------------- | ---------------------------- |
+| **叉积**、**外积**、向量积 | **cross product**、external product、vector product、**outer product** | $a\times b$、$a \otimes b$ | `numpy.cross`、`numpy.outer` |
+
+叉乘在数学上定义如下:
+
+$$\mathbf{a} \times \mathbf{b} = \| \mathbf{a}  \| \| \mathbf{b}  \| \sin(\theta) \ \mathbf{n}$$
+
+也就是通过右手法则求出第三个向量，垂直于 $a$ 和 $b$
+
+**但是！这里有一个混淆的点！**
+
+- **叉积**(**cross product**)才是上面数学定义的，求 $a$ 和 $b$ 所在平面的**法向量**。对应符号 $a \times b$。`numpy`中使用`numpy.cross()`来计算。
+
+- **外积**(**outer product**)是另一个概念！在线性代数中一般指两个向量的[**张量积**](<https://zh.wikipedia.org/wiki/%E5%A4%96%E7%A7%AF_(%E5%BC%A0%E9%87%8F%E7%A7%AF)>)，其结果为一**矩阵**；与外积相对，两向量的内积结果为标量。外积也可视作是矩阵的[**Kronecker积**](https://zh.wikipedia.org/wiki/%E5%85%8B%E7%BD%97%E5%86%85%E5%85%8B%E7%A7%AF)的一种特例。也就是 $a \otimes b$。`numpy`中使用`numpy.outer()`来计算。
+
+这两个名词常有混在一起，我推荐直接使用英文名，或者根据其输出结果来分辨。
+
+```python
+>>> a
+array([1, 2, 3])
+>>> b
+array([0, 1, 0])
+>>> np.outer(a,b) # 外积，结果为矩阵
+array([[0, 1, 0],
+       [0, 2, 0],
+       [0, 3, 0]])
+>>> np.outer(b,a) # 外积，结果为矩阵
+array([[0, 0, 0],
+       [1, 2, 3],
+       [0, 0, 0]])
+>>> np.cross(a,b) # 叉积，结果仍然是向量
+array([-3,  0,  1])
+>>> np.cross(b,a) # 叉积，结果仍然是向量
+array([ 3,  0, -1])
+```
+
+看起来`np.outer(a,b)`像是将 $a$ 变成`(3,1)`的矩阵，再将 $b$ 变成`(1,3)`再进行矩阵相乘的样子
+
+# 矩阵乘法
+
+首先是标量乘以矩阵，这个没什么好说的，矩阵逐个元素乘这个数就行了。
+
+```python
+>>> matrix
+array([[1, 2, 3],
+       [4, 5, 6],
+       [7, 8, 9]])
+>>> np.dot(2,matrix) # 因为dot输入参数如果有一个是0-D（也就是标量）的话
+array([[ 2,  4,  6], # 等价于np.multiply(a,b)也就是 a * b
+       [ 8, 10, 12],
+       [14, 16, 18]])
+>>> np.multiply(2, matrix)
+array([[ 2,  4,  6], # 这种情况更推荐用 multiply或者*
+       [ 8, 10, 12],
+       [14, 16, 18]])
+>>> 2 * matrix       # * 运算符等价于np.multiply
+array([[ 2,  4,  6],
+       [ 8, 10, 12],
+       [14, 16, 18]])
+```
+
+然后到所谓的**矩阵乘法**(**matrix multiplication**)设 $A$ 是 $n\times m$ 的矩阵， $B$ 是 $m\times p$ 的矩阵，则它们的矩阵积 $AB$ 是 $n\times p$ 的矩阵。 $A$ 中每一行的 $m$ 个元素都与 $B$ 中对应列的 $m$ 个元素对应相乘，这些乘积的和就是 $AB$ 中的一个元素。
+
+| 别名         | 英文                      | 数学符号 | numpy API                        |
+| ------------ | ------------------------- | -------- | -------------------------------- |
+| **矩阵乘法** | **matrix multiplication** | $AB$     | `numpy.dot`、`numpy.matmul`、`@` |
+
+也就是输入是两个`2-D`的`ndarray`，所以根据函数名也能知道`matmul`和`@`是计算矩阵乘法的。
+
+同时，如果`numpy.dot`的输入是两个`2-D`的`ndarray`的话，等价于`matmul`:
+
+```python
+>>> a.reshape(1,3) # 变成矩阵
+array([[1, 2, 3]])
+>>> np.matmul(a,matrix)
+array([30, 36, 42])
+>>> a @ matrix
+array([30, 36, 42])
+>>> np.dot(a,matrix)
+array([30, 36, 42])
+```
+
+# Hadamard乘积
+
+给定**两个相同维度的矩阵**可计算有阿达马乘积（**Hadamard product**），或称做逐项乘积、分素乘积（**element-wise product**, entrywise product）。
+
+重点就在于**element-wise**
+
+$$
+  \begin{bmatrix}
+    1 & 3 & 2 \\
+    1 & 0 & 0 \\
+    1 & 2 & 2
+  \end{bmatrix}
+\circ
+  \begin{bmatrix}
+    0 & 0 & 2 \\
+    7 & 5 & 0 \\
+    2 & 1 & 1
+  \end{bmatrix}
+=
+  \begin{bmatrix}
+    1 \cdot 0 & 3 \cdot 0 & 2 \cdot 2 \\
+    1 \cdot 7 & 0 \cdot 5 & 0 \cdot 0 \\
+    1 \cdot 2 & 2 \cdot 1 & 2 \cdot 1
+  \end{bmatrix}
+=
+  \begin{bmatrix}
+    0 & 0 & 4 \\
+    7 & 0 & 0 \\
+    2 & 2 & 2
+  \end{bmatrix}
+$$
+
+| 别名           | 英文                 | 数学符号                    | numpy API            |
+| -------------- | -------------------- | --------------------------- | -------------------- |
+| **阿达马乘积** | **Hadamard product** | $A \bigodot B$、$A \circ B$ | `numpy.mutiply`、`*` |
+
+```python
+>>> z
+array([[0, 1, 0],
+       [1, 0, 0],
+       [0, 0, 1]])
+>>> matrix
+array([[1, 2, 3],
+       [4, 5, 6],
+       [7, 8, 9]])
+>>> z * matrix # 等价于np.multiply
+array([[0, 2, 0],
+       [4, 0, 0],
+       [0, 0, 9]])
+>>> np.multiply(z,matrix)
+array([[0, 2, 0],
+       [4, 0, 0],
+       [0, 0, 9]])
+```
+
+需注意的是，阿达马乘积是克罗内克乘积的子矩阵
+
+# Kronecker乘积
+
+_比较少见_
+
+数学上，**克罗内克积**(**Kronecker product**)是两个任意大小的矩阵间的运算，表示为 $\bigotimes$。简单地说，就是将前一个矩阵的每个元素乘上后一个完整的矩阵。克罗内克积是**外积**从向量到矩阵的推广，也是张量积在标准基下的矩阵表示。
+
+| 别名                 | 英文                                  | 数学符号         | numpy API    |
+| -------------------- | ------------------------------------- | ---------------- | ------------ |
+| **克罗内克积**、直积 | **Kronecker product**、direct product | $A \bigotimes B$ | `numpy.kron` |
+
+```python
+>>> a
+array([[1, 2],
+       [3, 1]])
+>>> b
+array([[0, 3],
+       [2, 1]])
+>>> np.kron(a,b)
+array([[0, 3, 0, 6],
+       [2, 1, 4, 2],
+       [0, 9, 0, 3],
+       [6, 3, 2, 1]])
+```
+
+# Frobenius乘积
+
+_比较少见_
+
+在数学中，弗罗比尼乌斯内积(Frobenius inner product)是一种基于两个矩阵的二元运算，结果是一个数值。它常常被记为 $<A,B>_F$ 。这个运算是一个将矩阵视为向量的**逐元素内积**。参与运算的两个矩阵必须有相同的维度、行数和列数，但不局限于方阵。
+
+| 别名                 | 英文                        | 数学符号  | numpy API    |
+| -------------------- | --------------------------- | --------- | ------------ |
+| **弗罗比尼乌斯内积** | **Frobenius inner product** | $<A,B>_F$ | `numpy.vdot` |
+
+```python
+>>> a
+array([[1, 2],
+       [3, 1]])
+>>> b
+array([[0, 3],
+       [2, 1]])
+>>> np.vdot(a,b)
+13
+```

@@ -1,0 +1,291 @@
+---
+title: "Markdown 语法测试"
+date: "2026-01-27"
+description: "一篇包含所有 Markdown 语法的测试文章，用于检验博客渲染效果。"
+tags: ["Markdown", "Test", "Documentation"]
+published: true
+---
+
+## 标题测试
+
+以下是各级标题的展示效果：
+
+### 三级标题
+
+#### 四级标题
+
+##### 五级标题
+
+###### 六级标题
+
+---
+
+## 文本格式
+
+这是一段普通的文本。Markdown 支持多种文本格式：
+
+- **粗体文本** 使用双星号
+- *斜体文本* 使用单星号
+- ***粗斜体*** 使用三个星号
+- ~~删除线~~ 使用双波浪号
+- 这是 `行内代码` 的效果
+
+你也可以组合使用：**这是粗体中的 `代码`** 或者 *斜体中的 `代码`*。
+
+---
+
+## 链接和图片
+
+### 链接
+
+- [普通链接](https://example.com)
+- [带标题的链接](https://example.com "这是标题")
+- 自动链接：https://example.com
+
+### 图片
+
+图片语法类似链接，前面加 `!`：
+
+![示例图片](/images/avatar.webp)
+
+---
+
+## 列表
+
+### 无序列表
+
+- 第一项
+- 第二项
+  - 嵌套项 2.1
+  - 嵌套项 2.2
+    - 更深层嵌套
+- 第三项
+
+### 有序列表
+
+1. 第一步
+2. 第二步
+   1. 子步骤 2.1
+   2. 子步骤 2.2
+3. 第三步
+
+### 任务列表
+
+- [x] 已完成的任务
+- [x] 另一个完成的任务
+- [ ] 未完成的任务
+- [ ] 还有一个待办
+
+---
+
+## 引用块
+
+> 这是一段引用文字。引用可以用于强调重要内容或引用他人的话。
+>
+> 引用可以包含多个段落。
+
+嵌套引用：
+
+> 外层引用
+>
+> > 嵌套的引用
+> >
+> > > 更深的嵌套
+
+---
+
+## 代码块
+
+### JavaScript
+
+```javascript
+// 一个简单的 JavaScript 函数
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(fibonacci(10)); // 输出: 55
+```
+
+### TypeScript
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+async function fetchUser(id: number): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  return response.json();
+}
+```
+
+### Python
+
+```python
+# Python 类示例
+class Calculator:
+    def __init__(self):
+        self.result = 0
+
+    def add(self, value: int) -> 'Calculator':
+        self.result += value
+        return self
+
+    def multiply(self, value: int) -> 'Calculator':
+        self.result *= value
+        return self
+
+calc = Calculator()
+print(calc.add(5).multiply(3).result)  # 输出: 15
+```
+
+### CSS
+
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+```
+
+### JSON
+
+```json
+{
+  "name": "neuromancer",
+  "version": "1.0.0",
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "velite": "^0.3.0"
+  }
+}
+```
+
+### Bash
+
+```bash
+# 安装依赖并启动开发服务器
+npm install
+npm run dev
+
+# 或者使用 pnpm
+pnpm install && pnpm dev
+```
+
+---
+
+## 表格
+
+### 基础表格
+
+| 名称 | 类型 | 描述 |
+| --- | --- | --- |
+| `id` | number | 唯一标识符 |
+| `name` | string | 用户名称 |
+| `email` | string | 电子邮箱 |
+| `active` | boolean | 是否激活 |
+
+### 对齐方式
+
+| 左对齐 | 居中对齐 | 右对齐 |
+| :--- | :---: | ---: |
+| 内容 | 内容 | 内容 |
+| 较长的内容 | 较长的内容 | 较长的内容 |
+| 短 | 短 | 短 |
+
+---
+
+## 数学公式
+
+### 行内公式
+
+爱因斯坦的质能方程：$E = mc^2$
+
+二次方程求根公式：$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+
+### 块级公式
+
+高斯积分：
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+欧拉恒等式：
+
+$$
+e^{i\pi} + 1 = 0
+$$
+
+麦克斯韦方程组之一：
+
+$$
+\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}
+$$
+
+公式和文字混合出现：$e^{i\pi} + 1 = 0$ 这是一个公式。
+
+```math
+\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}
+\\
+\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}
+```
+
+---
+
+## 特殊内容
+
+### Emoji 表情
+
+支持 GitHub 风格的 emoji：
+
+- :smile: 笑脸
+- :rocket: 火箭
+- :heart: 爱心
+- :star: 星星
+- :thumbsup: 点赞
+
+### HTML 元素
+
+有些 HTML 元素可以直接使用：
+
+<details>
+<summary>点击展开更多内容</summary>
+
+这是折叠的内容。可以包含：
+
+- 列表
+- **格式化文本**
+- `代码`
+
+</details>
+
+### 键盘按键
+
+使用 <kbd>Ctrl</kbd> + <kbd>C</kbd> 复制，<kbd>Ctrl</kbd> + <kbd>V</kbd> 粘贴。
+
+Mac 用户使用 <kbd>Cmd</kbd> + <kbd>C</kbd> 和 <kbd>Cmd</kbd> + <kbd>V</kbd>。
+
+---
+
+## 长段落测试
+
+这是一段较长的文字，用于测试段落的行间距和阅读体验。良好的排版应该让读者感到舒适，不会因为行距太窄而感到拥挤，也不会因为行距太宽而难以连贯阅读。一般来说，正文的行高设置为 1.5 到 1.75 之间是比较合适的。
+
+另外，段落之间也需要适当的间距来区分不同的内容块。这有助于读者理解文章的结构，知道哪些内容是属于同一个主题的。在技术文档中，清晰的结构尤其重要，因为读者通常需要快速找到他们需要的信息。
+
+最后，字体大小也很重要。太小的字体会让读者感到疲劳，太大的字体则会显得不够专业。通常，正文字体大小设置为 16px 到 18px 是比较合适的选择。
+
+---
+
+*这篇文章展示了 Markdown 的各种语法，可以作为博客渲染效果的参考。*

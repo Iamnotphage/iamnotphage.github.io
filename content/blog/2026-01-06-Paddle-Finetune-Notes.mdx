@@ -1,0 +1,300 @@
+---
+title: PaddleSpeech微调心得
+date: 2026-01-06
+description: 微调PaddleSpeech模型实现音色克隆
+tags: ["tts", "finetune", "python"]
+categories: ["杂项", "深度学习"]
+published: true
+---
+
+# PaddleSpeech微调部署教程
+
+本文档指导如何在linux下搭建PaddleSpeech微调模型的环境
+
+声学模型：`fastspeech2`
+声码器：`hifigan`
+
+## 环境设置
+
+分为`手动配置环境`和`conda导入`:
+
+conda导入本人没有测试过
+
+### 手动配置环境(推荐)
+
+`cd`到**工作目录**下，本文档默认为`~`目录
+
+首先clone代码仓:
+
+```bash
+git clone https://github.com/PaddlePaddle/PaddleSpeech.git
+cd PaddleSpeech
+```
+
+conda创建我们微调的环境
+
+```bash
+conda create -n paddle python=3.10
+conda activate paddle # 请确保下面的命令都在此虚拟环境执行
+```
+
+下一步安装`paddlepaddle`
+
+去[官网检查对应版本](https://www.paddlepaddle.org.cn/)
+
+选择版本号，操作系统Linux，安装方式选pip，CUDA版本根据实际情况选
+
+```bash
+nvidia-smi # 比如我显示CUDA Version: 13.0
+```
+
+根据网页下方的提示，安装:
+
+```bash
+python -m pip install paddlepaddle-gpu==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cu130/
+```
+
+安装`pytest-runner`和`paddlespeech`:
+
+```bash
+pip install pytest-runner -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install . -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+下面执行一些必要组件的安装，以防止运行微调demo时报错:
+
+```bash
+conda install -c conda-forge ccache
+pip install aistudio-sdk==0.2.6
+```
+
+### conda导入环境
+
+这里是自动创建环境
+
+设置`environmnet.yml`最后一行的路径为本机安装conda的路径
+
+```bash
+conda env create -f environment.yml
+```
+
+
+## 下载pretrained模型
+
+这里参考的文章是[这个](https://github.com/PaddlePaddle/PaddleSpeech/tree/develop/examples/other/tts_finetune/tts3)
+
+---
+
+### 下载中文预训练模型
+
+首先cd到`./examples/other/tts_finetune/tts3`
+
+```bash
+cd examples/other/tts_finetune/tts3
+
+# 下载中文预训练模型
+mkdir -p pretrained_models && cd pretrained_models
+# pretrained fastspeech2 model
+wget https://paddlespeech.cdn.bcebos.com/Parakeet/released_models/fastspeech2/fastspeech2_aishell3_ckpt_1.1.0.zip 
+unzip fastspeech2_aishell3_ckpt_1.1.0.zip
+# pretrained hifigan model
+wget https://paddlespeech.cdn.bcebos.com/Parakeet/released_models/hifigan/hifigan_aishell3_ckpt_0.2.0.zip
+unzip hifigan_aishell3_ckpt_0.2.0.zip
+cd ../
+```
+
+---
+
+### 准备数据集
+
+```bash
+mkdir -p input && cd input
+
+# mini数据集 demo用
+wget https://paddlespeech.cdn.bcebos.com/datasets/csmsc_mini.zip
+unzip csmsc_mini.zip
+cd ../
+```
+
+### 下载MFA工具和预训练模型
+
+
+```bash
+mkdir -p tools && cd tools
+# mfa tool
+wget https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/releases/download/v1.0.1/montreal-forced-aligner_linux.tar.gz
+tar xvf montreal-forced-aligner_linux.tar.gz
+cp montreal-forced-aligner/lib/libpython3.6m.so.1.0 montreal-forced-aligner/lib/libpython3.6m.so
+mkdir -p aligner && cd aligner
+
+# pretrained mfa model for Chinese data
+wget https://paddlespeech.cdn.bcebos.com/MFA/ernie_sat/aishell3_model.zip
+unzip aishell3_model.zip
+wget https://paddlespeech.cdn.bcebos.com/MFA/AISHELL-3/with_tone/simple.lexicon
+cd ../../
+```
+
+## 微调模型
+
+微调之前，参数在`conf/finetune.yaml`里面:
+
+可以设置`batch_size`、`learning_rate`以及`num_snapshots`
+
+默认的`-1`代表`batch_size`是64，可以根据显存来调整这个参数。
+
+以及`num_snapshots`设置会定期保存模型到磁盘，默认保存`5`个。
+
+以及可以设置冻结层`frozen_layers`(模型的所有层在`/conf/fastspeech2_layers.txt`)
+
+一般冻结和输入层比较近的层。
+
+### 一些经验结论
+
+> `batch_size` 在内存足够的情况下可以尽量大
+> `learning_rate` 微调需要比预训练模型的lr（0.001）小
+> `num_snapshots` 可以调整用于多保存些模型，可查看合成效果（loss 指标不是唯一标准，并且训练步数太多也可能过拟合）
+> `frozen_layers` 数据量比较小的情况下可以冻结一些层的参数，通常冻结与输入近的层
+
+`epoch`在调用`finetune.py`的时候传入了参数。
+
+---
+
+在目录`PaddleSpeech/examples/other/tts_finetune/tts3`下
+
+```bash
+./run.sh # finetune.py 传参 epoch 100
+```
+
+建议详细阅读`run.sh`，它会执行`local/`下的几个python脚本:
+
+`check_oov.py`: 检查OOV(Out-Of-Vocabulary)词汇。检查音频文本内容对应的音素是否在预训练MFA模型和AM模型的音素列表中,确保对齐和微调正常。会将不包含OOV词的音频复制到新目录,并生成对应的标签文件,记录OOV信息到`oov_info.txt`。
+
+`get_mfa_result.py`: 使用Montreal Forced Aligner(MFA)工具进行音素级别的强制对齐,调用`mfa_align`命令对音频和文本进行对齐,生成TextGrid格式的对齐结果到`mfa_result`目录。
+
+`generate_duration.py`: 从MFA生成的TextGrid文件中提取音素持续时间(duration)信息,生成`durations.txt`文件,包含每个音频的音素序列及其对应的帧数。
+
+`extract_feature.py`: 提取声学特征,包括mel频谱(speech)、音高(pitch)和能量(energy)特征,使用预训练模型的统计信息进行归一化处理。将数据自动划分为训练集(train)、验证集(dev)和测试集(test),生成对应的metadata.jsonl文件。
+
+`prepare_env.py`: 准备微调环境。将预训练模型文件(.pdz)复制到输出目录的checkpoints文件夹,并创建`records.jsonl`文件记录模型路径和迭代次数,为后续微调做准备。
+
+`finetune.py`: 执行实际的微调训练过程。加载配置文件和数据,构建FastSpeech2模型,设置优化器和训练参数。支持冻结指定层、多GPU训练、定期保存快照等功能。训练过程中会在`exp/`目录下保存模型检查点。
+
+
+
+微调之后的模型在`examples/other/exp/default/checkpoints/`内，有多个模型(.pdz)以及记录所有模型的路径和迭代次数的文件`records.jsonl`
+
+---
+
+最后执行`paddlespeech/t2s/exps/synthesize_e2e.py`
+
+根据`paddlespeech/t2s/assets/sentences.txt`的文本内容，进行端到端生成语音。
+
+测试生成的文件在`examples/other/tts_finetune/tts3/test_e2e/xxx.wav`
+
+
+---
+
+以上是官方demo的例子，能跑成功代表环境没有问题。
+
+注意跑的时候监控一下GPU显存的占用，调节`batch_size`
+
+运行微调的时候可以用自带的visualDL可视化数据:
+
+在`examples/other/tts_finetune/tts3`目录下:
+
+```bash
+visualdl --logdir exp/default --port 8080
+```
+
+### 社区数据集
+
+需要准备`.wav`格式的数据集，以及对应的拼音数据集
+
+目前找到的开源的数据集大部分是游戏角色语音包:
+
+[鸣潮语音数据集](https://www.modelscope.cn/datasets/aihobbyist/WutheringWaves_Dataset)
+
+这个数据量还可以，解压之后大概占用`9.6GB`
+
+针对每个角色收集了`.wav`和对应的文本(`.lab`格式)
+
+需要把中文转能够微调处理的拼音数据，可以用python官方的`pypinyin`库
+
+```python
+from pypinyin import pinyin, Style
+
+>>> print(pinyin('原神', style=Style.TONE3))
+[['yuan2'], ['shen1']] # 注意一定要Style.TONE3
+# 还需要注意轻声比如de要转成de5, n2要转成en2
+# 以便check_oov.py脚本检验
+```
+
+---
+
+后续进行微调模型要注意，这里demo生成的checkpoints会影响后续微调
+
+先删除`exp/default`再执行:
+
+```bash
+rm -rf exp/default
+
+# 预处理数据集（以上述数据集的今汐的角色语音包为例)
+# 已经改名000001.wav : 000001.lab
+python process.py
+
+./run.sh --stage 0 --stop_stage 3
+
+./run.sh --stage 4 --stop_stage 4 # 准备环境，复制预训练模型 run only once.
+
+./run.sh --stage 5 --stop_stage 6 # finetune & synthesizes
+```
+
+后续如果需要在当前epoch上继续训练，就不需要再执行第四个阶段了，因为第四个阶段会复制预训练的模型，把`records.jsonl`重写
+
+## 遇到的问题
+
+### 1. 没有~/Documents/MFA/newdir/train/mfcc/raw_mfcc.0.scp文件
+
+```text
+FileNotFoundError: [Errno 2] No such file or directory: '~/Documents/MFA/newdir/train/mfcc/raw_mfcc.0.scp'
+```
+
+MFA（Montreal Forced Aligner）因为缺失或冲突的 libopenblas 库导致特征提取失败（从而导致后续的 AssertionError）
+
+参考这个[issue](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/issues/91)
+
+> 定位到问题是计算 MFCC 时出问题，从网上搜索得到解法（参考 149 和 91）。
+> 
+> rm tts3/tools/montreal-forced-aligner/lib/thirdparty/bin/libopenblas.so.0
+> sudo apt install libopenblas-dev
+> 即不要使用原来自带的 libopenblas.so.0，安装最新的包。
+
+
+如果你是root用户，可以直接执行上述命令。
+
+如果不希望搞乱root环境，或者非root用户:
+
+```bash
+conda install -c conda-forge openblas
+ln -snf ~/miniconda3/envs/paddle/lib/libopenblas.so.0 ~/PaddleSpeech/examples/other/tts_finetune/tts3/tools/montreal-forced-aligner/lib/thirdparty/bin/libopenblas.so.0 # 注意路径 不一定照抄
+
+# 确保动态库路径 (或者添加到run.sh中)
+export LD_LIBRARY_PATH=~/miniconda3/envs/paddle/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=~/miniconda3/envs/paddle/lib/python3.10/site-packages/nvidia/cu13/lib:$LD_LIBRARY_PATH
+```
+
+然后再执行`./run.sh`
+
+
+## 参考文章
+
+[✨ 关于训练一个自己的TTS模型 #1842](https://github.com/PaddlePaddle/PaddleSpeech/discussions/1842)
+
+[🎉 PaddleSpeech 实现多种卡通音色和方言的中英文混合 TTS #2492](https://github.com/PaddlePaddle/PaddleSpeech/discussions/2492)
+
+[多语言合成与小样本合成技术应用实践](https://aistudio.baidu.com/projectdetail/9969106)
+
+[[PaddleSpeech] 音色克隆之原神角色 `<胡桃>`](https://aistudio.baidu.com/projectdetail/4677578)
+
+[微调PaddleSpeech预训练模型实现音色克隆（以刻晴为例）](https://aistudio.baidu.com/projectdetail/5035794?channelType=0&channel=0)
+

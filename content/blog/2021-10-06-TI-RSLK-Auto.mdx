@@ -1,0 +1,331 @@
+---
+title: TI-RSLK自动循迹小车
+date: 2021-10-06
+description: 西电双创周小项目:自动循迹小车实现
+tags: ["c", "TI-RSLK", "嵌入式"]
+categories: ["杂项"]
+published: true
+giscus_comments: true
+toc: true
+---
+
+# 前言
+
+暑假双创周花了几天做的，没啥含金量，纯记录、分享、追悼。
+主板用的是德州仪器的MSP432P401R，需要下载CCS和相关的SDK软件开发包。
+
+# 展示
+
+![](https://github.com/Iamnotphage/TI-RSLK-Auto-Follow-Car/blob/main/images/complete.gif)
+
+![](https://github.com/Iamnotphage/TI-RSLK-Auto-Follow-Car/blob/main/images/complete2.gif)
+
+# 一、总体功能描述
+
+## 1.1 驱动
+
+利用底层驱动函数，控制电机的引脚高低电平变化，从而控制电机的启动、停止，并利用底层驱动函数的不同组合组成封装函数，让小车实现前进、后退、左转弯以及右转弯等驱动功能。
+
+## 1.2 碰撞
+
+首先利用驱动函数使小车能够运行，在碰撞模块中，通过碰撞传感器检测碰撞状态，改变车轮状态，利用GPIO库函数实现车轮转动，从而实现左右转弯、直行后退。
+
+## 1.3 变速
+
+利用PWM波驱动控制电机启停的引脚，改变PWM波占空比的大小，首先人工设定周期，对电机状态利用GPIO库函数设定High和Low状态实现类似PWM的调速模式。
+
+## 1.4 循迹行进
+
+在循迹行进模块中，利用车底部的光传感器，首先让P5.3发射红外线，其余接收信号，P7.0至7.7检测到有黑线部分后，利用返回值判定多种基本线路，从而实现对不同线路状态的判断，进一步控制电机状态，实现左右大转弯，左右小转弯、前进小转弯、后退、刹车等功能。
+
+# 二、模块功能设计
+
+## 2.1 TI-RLSK驱动基本功能设计
+
+### （1）驱动基本功能设计图
+
+[](https://blog.csdn.net/Phage17/article/details/127348231?spm=1001.2014.3001.5501)
+
+### （2）驱动基本功能设计思路
+
+根据电机驱动模块的引脚与真值表，由**P1.6/P1.7**控制电机转向，**P2.7/P2.6**控制电机的启动，利用直接赋予高低电平的语句实现功能
+
+[](https://blog.csdn.net/Phage17/article/details/127348231?spm=1001.2014.3001.5501)
+
+据此思路实现了驱动的所有情况的功能，并将以上所有底层和封装函数，做成.h文件放在工程中便于主函数调用。
+
+## 2.2 TI-RLSK行走碰撞功能设计
+
+### （1）碰撞功能设计流程图
+
+[](https://blog.csdn.net/Phage17/article/details/127348231?spm=1001.2014.3001.5501)
+
+### （2）碰撞功能设计思路
+
+[](https://blog.csdn.net/Phage17/article/details/127348231?spm=1001.2014.3001.5501)
+
+# 三、程序实现
+
+用的是Code Composer Studio，类C的语言。
+
+```cpp
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+/* Standard Includes */
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+/* Application Defines */
+#define TIMER_PERIOD 127
+#define DUTY_CYCLE1 67
+#define DUTY_CYCLE2 70
+
+uint8_t LineSensor_Read(uint32_t time);
+void Delay_Nx1us(uint32_t time);
+
+static volatile uint8_t val;
+volatile uint16_t speed_left=50,speed_right=50;
+volatile uint8_t flag=0;
+volatile uint32_t ui32_delay;
+
+/* Timer_A UpDown Configuration Parameter */
+const Timer_A_UpDownModeConfig upDownConfig ={
+ TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK Clock SOurce
+ TIMER_A_CLOCKSOURCE_DIVIDER_1,          // SMCLK/1 = 3MHz
+ TIMER_PERIOD,                           // 127 tick period
+ TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
+ TIMER_A_CCIE_CCR0_INTERRUPT_DISABLE,    // Disable CCR0 interrupt
+ TIMER_A_DO_CLEAR                        // Clear value
+};
+
+/* Timer_A Compare Configuration Parameter  (PWM1) */
+Timer_A_CompareModeConfig compareConfig_PWM_L ={
+ TIMER_A_CAPTURECOMPARE_REGISTER_4,          // Use CCR4
+ TIMER_A_CAPTURECOMPARE_INTERRUPT_DISABLE,   // Disable CCR interrupt
+ TIMER_A_OUTPUTMODE_TOGGLE_SET,              // Toggle output but
+ DUTY_CYCLE1                                 // 32 Duty Cycle
+};
+
+/* Timer_A Compare Configuration Parameter (PWM2) */
+Timer_A_CompareModeConfig compareConfig_PWM_R ={
+ TIMER_A_CAPTURECOMPARE_REGISTER_3,          // Use CCR3
+ TIMER_A_CAPTURECOMPARE_INTERRUPT_DISABLE,   // Disable CCR interrupt
+ TIMER_A_OUTPUTMODE_TOGGLE_SET,              // Toggle output but
+ DUTY_CYCLE2                                 // 96 Duty Cycle
+};
+
+void motor_gpio_init(void);
+void robot_init_status(void);
+//初始化端口配置
+void motor_gpio_init(void){
+    GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN7);
+    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN6);
+}
+
+void TurnLeft(){   //左转模式
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN7);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN7); //左轮向后
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN6);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6);  //右轮向前
+}
+void TurnLeftDegree(int value){//传入左转角度
+    value*=37;
+    while(value--){
+        TurnLeft();
+    }
+}
+void TurnRight(){   //右转模式
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN7);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN7);  //左轮向前
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN6);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6); //右轮向后
+}
+void TurnRightDegree(int value){//传入右转角度
+    value*=37;
+    while(value--){
+        TurnRight();
+    }
+}
+void Forward (void) { //车辆直行
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN7);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN7);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN6);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6);
+}
+void Back (int time) {  //输入后退时间控制距离   //车辆后退或刹车
+    while(time--){
+       GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN7);
+       GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN7);
+       GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN7);
+       GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN6);
+       GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN6);
+       GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6);
+    }
+}
+
+void Stop(){  //关闭动作
+    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
+
+    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN6);
+
+}
+volatile uint32_t ui32Loop;
+void delay(int period){ // 输入延时值
+    for(ui32Loop = 0; ui32Loop < period; ui32Loop++);
+}
+//电机相关引脚的初始化。
+void robot_init_status(void){
+    GPIO_setOutputLowOnPin (GPIO_PORT_P3, GPIO_PIN7);
+    GPIO_setOutputLowOnPin (GPIO_PORT_P3, GPIO_PIN6);
+    GPIO_setOutputLowOnPin (GPIO_PORT_P2, GPIO_PIN7);
+    GPIO_setOutputLowOnPin (GPIO_PORT_P2, GPIO_PIN6);
+    GPIO_setOutputLowOnPin (GPIO_PORT_P1, GPIO_PIN7);
+    GPIO_setOutputLowOnPin (GPIO_PORT_P1, GPIO_PIN6);
+}
+int main(void){
+    volatile uint32_t debug_time;
+    //停用看门狗
+    MAP_WDT_A_holdTimer();
+    //使能浮点运算的单元FPU,提高计算效率
+    MAP_FPU_enableModule();
+    MAP_CS_setDCOFrequency(24000000);
+    MAP_CS_setReferenceOscillatorFrequency(CS_REFO_32KHZ);
+    MAP_CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_MCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_HSMCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_2);
+    MAP_CS_initClockSignal(CS_SMCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_8);
+    //以上是系统时钟初始化
+    //GPIO端口初始化
+    motor_gpio_init();
+    robot_init_status();
+
+    /*p1.0设为输出，LED用来指示程序正常运行*/
+    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
+    GPIO_setAsOutputPin(GPIO_PORT_P2, GPIO_PIN0+GPIO_PIN1+GPIO_PIN2);
+
+    //p5.3接发射led,设置为输出.　输出低电平(默认关闭)
+    GPIO_setAsOutputPin(GPIO_PORT_P5, GPIO_PIN3);
+    GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN3);
+
+    //p7.0-p7.7全都设置为输入
+    GPIO_setAsInputPin(GPIO_PORT_P7, PIN_ALL8);
+
+    //设置P2.6 / P2.7 引脚为输出，且选择功能引脚(PWM输出)
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+                                                    GPIO_PIN6 + GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+    //Timer_A1工作在增减计数模式,开始计数
+    MAP_Timer_A_configureUpDownMode(TIMER_A0_BASE, &upDownConfig);
+    MAP_Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_UPDOWN_MODE);
+
+    //初始化比较寄存器产生PWM1
+    MAP_Timer_A_initCompare(TIMER_A0_BASE, &compareConfig_PWM_L);
+
+    //初始化比较寄存器产生PWM2
+    MAP_Timer_A_initCompare(TIMER_A0_BASE, &compareConfig_PWM_R);
+    MAP_SysCtl_enableSRAMBankRetention(SYSCTL_SRAM_BANK1);
+    MAP_Interrupt_enableMaster();
+
+    printf("line sensor test start!\n");
+
+    Delay_Nx1us(2000000);
+    debug_time = 1000;
+    while (1){//判断小车的状态是什么样的
+        Delay_Nx1us(2); //延时0.00048s
+        val=LineSensor_Read(debug_time);
+
+        //大右转
+        if(val==0x07 || val==0x0f || val==0x1f || val==0x3f || val==0x7f){
+            TurnRightDegree(50);
+        }
+        //大左转
+        if(val==0xe0 || val==0xf0 || val==0xf8 || val==0xfc || val==0xfe){
+            TurnLeftDegree(50);
+        }
+        //直行小转弯右
+        if(val==0x1 || val==0x2 ||  val==0x3 || val == 0x6 ){
+            TurnRightDegree(5);
+        }
+        //直行小转弯左
+        if(val==0x40 || val==0x80 || val==0xc0 || val == 0x60 ){
+            TurnLeftDegree(5);
+        }
+        //十字路口 orT字路口
+        if(val==0xff){
+            Forward();
+            delay(100000);
+            val=LineSensor_Read(debug_time);
+            // 0xff ->T字路口
+            if(val==0x00){
+                Stop();
+                break;
+                //y遇到T字停止
+            }else{// 十字路口
+                Forward();
+                delay(20);
+                Stop();
+            }
+        }
+        // 断头
+        if(val==0x00){
+            Back(200);
+        }else{
+            Forward();
+        }// 直行
+        printf("Line Sensor State:%#x\n",val);
+    }
+}
+//读取传感器的数据
+uint8_t LineSensor_Read(uint32_t time)
+{
+    uint8_t result;
+    //P5.3输出高电平,打开红外发射管
+    GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN3);
+    //P7.0-7.7方向设置为输出
+    GPIO_setAsOutputPin(GPIO_PORT_P7,PIN_ALL8);
+    //设置P7.0-7.7输出高电平
+    GPIO_setOutputHighOnPin(GPIO_PORT_P7,PIN_ALL8);
+    //延时10us
+    Delay_Nx1us(10);
+    //P7.0-7.7方向设置为输入
+    GPIO_setAsInputPin(GPIO_PORT_P7,PIN_ALL8);
+    //延时特定时间
+    Delay_Nx1us(1000);
+    //读取P7.0-7.7的输入值
+    result = P7->IN;
+    //P5.3输出低电平,关闭红外发射管
+    GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN3);
+    //返回端口读取值
+    return result;
+}
+
+void Delay_Nx1us(uint32_t time){
+    while(time>0){
+        time--;//空位操作判断时间
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+        __no_operation();
+    }
+}
+
+```
