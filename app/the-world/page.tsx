@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { SiteNavbar } from "@/components/site-navbar";
 import {
@@ -44,30 +45,38 @@ const DIGITAL_ITEMS = [
   {
     title: "Counter Strike",
     image: "/images/the-world/digital/cs.webp",
-    className: "absolute top-[35%] left-[8%] rotate-[-9deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    className: "absolute top-[40%] left-[4%] rotate-[-9deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
     landscape: true,
+    caption: "谁是人类？",
   },
   {
     title: "Overwatch",
     image: "/images/the-world/digital/overwatch.webp",
-    className: "absolute top-[8%] left-[15%] rotate-[8deg]",
-    landscape: false,
+    className: "absolute top-[-10%] left-[6%] rotate-[8deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    landscape: true,
+    caption: "守望先锋国服停服纪念",
   },
   {
-    title: "Game 3",
-    image: "/images/the-world/digital/3.jpg",
-    className: "absolute top-[5%] right-[12%] rotate-[-6deg]",
+    title: "Outer Wilds",
+    image: "/images/the-world/digital/outerwilds.webp",
+    className: "absolute top-[40%] right-[12%] rotate-[11deg]",
     landscape: false,
+    caption: "你摧毁了时空结构",
   },
   {
-    title: "Game 4",
-    image: "/images/the-world/digital/4.jpg",
-    className: "absolute top-[42%] right-[22%] rotate-[11deg]",
-    landscape: false,
+    title: "PUBG",
+    image: "/images/the-world/digital/pubg.webp",
+    className: "absolute top-[-5%] right-[12%] rotate-[-6deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    landscape: true,
+    caption: "分工明确地吃鸡",
   },
 ];
 
+const TOOLTIP_OFFSET = 14;
+
 export default function TheWorldPage() {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; caption: string } | null>(null);
+
   return (
     <div className="relative min-h-screen w-full">
       <SiteNavbar />
@@ -108,7 +117,10 @@ export default function TheWorldPage() {
               </DraggableCardContainer>
             </section>
 
-            <section className="mb-12 overflow-hidden rounded-3xl border border-neutral-200/80 bg-neutral-50/90 shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900/90">
+            <section
+              className="mb-12 overflow-hidden rounded-3xl border border-neutral-200/80 bg-neutral-50/90 shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900/90"
+              onMouseLeave={() => setTooltip(null)}
+            >
               <div className="px-6 pt-8 pb-6 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.25)]">
                 <h2 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                   Digital World
@@ -117,25 +129,48 @@ export default function TheWorldPage() {
               <DraggableCardContainer className="relative flex min-h-[90vh] w-full items-start justify-center overflow-clip px-4 pb-8">
                 {DIGITAL_ITEMS.map((item) => (
                   <DraggableCardBody key={item.title} className={item.className}>
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      width={item.landscape ? 416 : 320}
-                      height={item.landscape ? 312 : 320}
-                      className={
-                        item.landscape
-                          ? "pointer-events-none relative z-10 w-full flex-shrink-0 object-cover"
-                          : "pointer-events-none relative z-10 h-80 w-80 object-cover"
+                    <div
+                      className="relative w-full flex-shrink-0"
+                      onMouseMove={
+                        item.caption
+                          ? (e) => setTooltip({ x: e.clientX, y: e.clientY, caption: item.caption ?? "" })
+                          : undefined
                       }
-                      unoptimized
-                      style={item.landscape ? { aspectRatio: "4/3" } : undefined}
-                    />
+                      onMouseLeave={() => setTooltip(null)}
+                    >
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        width={item.landscape ? 416 : 320}
+                        height={item.landscape ? 312 : 320}
+                        className={
+                          item.landscape
+                            ? "pointer-events-none relative z-10 w-full flex-shrink-0 object-cover"
+                            : "pointer-events-none relative z-10 h-80 w-80 object-cover"
+                        }
+                        unoptimized
+                        style={item.landscape ? { aspectRatio: "4/3" } : undefined}
+                      />
+                    </div>
                     <h3 className={item.landscape ? "mt-4 flex-shrink-0 text-center text-xl font-bold text-neutral-700 dark:text-neutral-300" : "mt-4 text-center text-2xl font-bold text-neutral-700 dark:text-neutral-300"}>
                       {item.title}
                     </h3>
                   </DraggableCardBody>
                 ))}
               </DraggableCardContainer>
+
+              {tooltip && (
+                <div
+                  className="pointer-events-none fixed z-50 w-max max-w-[min(90vw,24rem)] truncate rounded-lg bg-neutral-800/95 px-3 py-1.5 text-xs text-white shadow-lg"
+                  style={{
+                    left: tooltip.x + TOOLTIP_OFFSET,
+                    top: tooltip.y + TOOLTIP_OFFSET,
+                  }}
+                  aria-hidden
+                >
+                  {tooltip.caption}
+                </div>
+              )}
             </section>
           </div>
         </main>

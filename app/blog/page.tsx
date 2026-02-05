@@ -82,25 +82,21 @@ function BlogPageContent() {
 
   return (
     <div className="relative">
-      {/* Hero Section - 无 grid 纹理，深色下封面干净 */}
-      <div className="relative z-10 overflow-hidden bg-gradient-to-b from-emerald-50 to-white dark:from-green-950/20 dark:to-neutral-950">
+      <div className="relative z-10 border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/80">
         <div className="container mx-auto max-w-6xl px-6 py-4 lg:py-6">
           <div className="space-y-6">
-            <h1 className="bg-gradient-to-r from-emerald-500 via-green-500 to-green-700 dark:from-lime-300 dark:via-green-400 dark:to-green-600 bg-clip-text text-5xl font-bold tracking-tight text-transparent lg:text-6xl pb-1">
+            <h1 className="text-5xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 lg:text-6xl pb-1">
               Blog
             </h1>
-            <p className="max-w-2xl text-lg text-muted-foreground">
+            <p className="max-w-2xl text-lg text-neutral-500 dark:text-neutral-400">
               Thoughts on technology, programming, and everything in between.
             </p>
           </div>
         </div>
-
-        {/* Decorative gradient orb */}
-        <div className="absolute -top-24 right-0 h-96 w-96 rounded-full bg-gradient-to-br from-emerald-400/20 to-green-600/20 blur-3xl dark:from-lime-300/10 dark:to-green-500/10" />
       </div>
 
-      {/* Posts Grid - 仅此区域有 grid 纹理 */}
       <div className="relative min-h-[40vh] bg-white dark:bg-neutral-950">
+        {/* Posts Grid - 仅此区域有 grid 纹理 */}
         <TextureOverlay texture="grid" opacityLight={0.12} opacityDark={0.3} className="z-0 pointer-events-none" />
         <div className="relative z-10 container mx-auto max-w-6xl px-6 pt-8 pb-16">
           {/* Category filters（搜索请用顶部 dock 右侧「搜索」或 ⌘K） */}
