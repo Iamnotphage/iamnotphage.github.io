@@ -1,0 +1,117 @@
+---
+title: "CosyVoice3个人部署经验"
+date: "2026-02-05"
+description: "50系显卡部署CosyVoice3，构建FastAPI服务端，vllm+fp16流式推理"
+tags: ["tts", "fastapi", "python"]
+published: true
+categories: ["深度学习", "杂项"]
+giscus_comments: true
+toc: true
+---
+## CosyVoice 3 个人部署经验
+
+[本项目](https://github.com/Iamnotphage/CosyVoice-vllm)基于[CosyVoice工程加速](https://github.com/yu-haoyuan/CosyVoice#)
+
+简要介绍5060Ti显卡配置vllm版本CosyVoices
+
+简单FastAPI + vllm + fp16 + 流式输出服务端
+
+`Tesla T4 16GB`显卡首包延迟500ms
+
+### 环境准备
+
+两套GPU设备均部署成功。
+
+#### Tesla T4 16GB
+
+CUDA版本`11.5`:
+
+```bash
+root@server:~/ nvcc -V
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2021 NVIDIA Corporation
+Built on Thu_Nov_18_09:45:30_PST_2021
+Cuda compilation tools, release 11.5, V11.5.119
+Build cuda_11.5.r11.5/compiler.30672275_0
+```
+
+torch版本`2.7.0`，vllm版本`0.9.0`，transformers版本`4.51.3`, numpy版本`1.26.4`
+
+### RTX5060 Ti
+
+着重介绍这个显卡的环境配置，由于5060ti用的是新架构sm_120，安装冲突超多。
+
+尝试出来的稳定的环境配置方案:
+
+首先`nvcc -V`版本是`13.1`(如果系统不是这个版本可以用`conda install`指定版本，和系统版本隔离)
+
+```bash
+# 创建conda虚拟环境
+conda create -n name python=3.10
+
+# 必须先安装vllm和transformers和numpy<2的版本
+pip install vllm==v0.11.0 transformers==4.57.1 numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
+
+# 再从本项目的requirements.txt安装
+pip install -r requirements.txt
+```
+
+**记得安装官方代码仓安装子模块Matcha-TTS**
+
+再测试`vllm_example.py`即可。
+
+### 启动服务
+
+启动 API Server（FastAPI）：
+
+```bash
+conda activate cosyvoice
+# 默认端口 9233
+python CosyVoice/server.py
+```
+
+### API 接口说明
+
+Server 提供了以下 HTTP POST 接口：
+
+| 接口路径 | 用途 | 参数 (Form/File) | 说明 |
+| :--- | :--- | :--- | :--- |
+| `/inference/zero-shot` | 零样本语音克隆 | `tts_text`: 合成文本 `prompt_text`: 参考音频文本 `prompt_wav`: 参考音频文件 | 最常用的克隆模式，需要参考音频及其对应文本。 |
+| `/inference/cross-lingual` | 跨语种/细粒度控制 | `tts_text`: 合成文本 `prompt_wav`: 参考音频文件 | 无需参考文本。无需语言标签。**注意：日语需要输入片假名。** |
+| `/inference/instruct` | 自然语言指令控制 | `tts_text`: 合成文本 `prompt_text`: 指令文本 `prompt_wav`: 参考音频文件 | 通过指令控制风格、语速、方言等（如“请用广东话表达”）。 |
+
+### 客户端使用示例
+
+提供了 `client.py` 用于测试和调用服务：
+
+```bash
+# 查看帮助
+python CosyVoice/client.py --help
+
+# 使用预设音色进行 Zero-shot 推理
+python CosyVoice/client.py --mode zero-shot --text "你好，我是智能助手。" --spk kaishu
+
+# 跨语种推理 (日语需使用片假名)
+python CosyVoice/client.py --mode cross-lingual --text "コンニチハ" --spk cross_lingual
+
+# 指令控制 (如粤语)
+python CosyVoice/client.py --mode instruct --text "你好啊" --instruct "请用广东话表达" --spk kaishu
+```
+
+### 多语言与方言支持
+
+语言覆盖范围如下表所示：
+
+| 类别 | 覆盖范围 / 支持列表 |
+| :--- | :--- |
+| **支持语言 (9种)** | 中文、英语、日语、韩语、德语、西班牙语、法语、意大利语、俄语 |
+| **中文方言/口音 (18种+)** | 普通话、广东话、东北话、甘肃话、贵州话、河南话、湖北话、江西话、闽南话、宁夏话、山西话、陕西话、山东话、上海话、四川话、天津话、云南话 |
+| **其他特性** | 支持多语种/跨语种零样本语音克隆 |
+
+### 性能优化
+
+- 优化手段：添加 Cache、缩短首帧长度。
+- 注意事项：用于克隆的参考音频请尽量去除首尾静音和换气声，防止合成音频开头产生静音导致首包延迟变高。
+
+ps: 尝试分析热点函数找出性能优化的瓶颈，目前未执行。参考`server_profile.prof`和`analyze_profile.py`
+
