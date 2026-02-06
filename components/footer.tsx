@@ -117,9 +117,22 @@ export function FooterLinks() {
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
             © 2026 neuromancer.club
           </p>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <span className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
             All rights reserved
-          </p>
+            <a
+              href="https://github.com/Iamnotphage/iamnotphage.github.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              aria-label="Source"
+            >
+              <MaskedSvgIcon
+                src="/icons/Source-Icons.svg"
+                className="h-[1em] w-[1em]"
+                title="Source"
+              />
+            </a>
+          </span>
         </div>
       </div>
     </footer>
