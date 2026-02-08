@@ -39,11 +39,11 @@ const navLinks = [
 ];
 
 const socialLinks = [
-  { label: "GitHub", href: "https://github.com/Iamnotphage", icon: "/icons/Github-Icons.svg" },
-  { label: "X", href: "https://x.com/iamnotphage", icon: "/icons/X-Icons.svg" },
-  { label: "Instagram", href: "https://www.instagram.com/iamn0tphage/", icon: "/icons/Instagram-Icons.svg" },
-  { label: "Red Note", href: "https://xhslink.com/m/3pQXApovmMO", icon: "/icons/Xiaohongshu-Icons.svg" },
-  { label: "Steam", href: "https://steamcommunity.com/profiles/76561198803581331/", icon: "/icons/Steam-Icons.svg" },
+  { label: "GitHub", href: "https://github.com/Iamnotphage", icon: "/icons/github.svg" },
+  { label: "X", href: "https://x.com/iamnotphage", icon: "/icons/x.svg" },
+  { label: "Instagram", href: "https://www.instagram.com/iamn0tphage/", icon: "/icons/instagram.svg" },
+  { label: "Red Note", href: "https://xhslink.com/m/3pQXApovmMO", icon: "/icons/xiaohongshu.svg" },
+  { label: "Steam", href: "https://steamcommunity.com/profiles/76561198803581331/", icon: "/icons/steam.svg" },
 ];
 
 export function FooterLinks() {
@@ -127,7 +127,7 @@ export function FooterLinks() {
               aria-label="Source"
             >
               <MaskedSvgIcon
-                src="/icons/Source-Icons.svg"
+                src="/icons/source.svg"
                 className="h-[1em] w-[1em]"
                 title="Source"
               />
