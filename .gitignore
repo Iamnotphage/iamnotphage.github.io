@@ -48,3 +48,6 @@ scripts/
 .velite/
 .next/
 
+# unused UI components (kept for reference)
+components/ui/_unused/
+

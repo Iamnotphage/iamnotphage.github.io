@@ -57,27 +57,27 @@ const contactLinks = [
   {
     name: "GitHub",
     href: "https://github.com/Iamnotphage",
-    icon: <MaskedSvgIcon src="/icons/Github-Icons.svg" className="h-4 w-4" title="GitHub" />,
+    icon: <MaskedSvgIcon src="/icons/github.svg" className="h-4 w-4" title="GitHub" />,
   },
   {
     name: "X",
     href: "https://x.com/iamnotphage",
-    icon: <MaskedSvgIcon src="/icons/X-Icons.svg" className="h-4 w-4" title="X" />,
+    icon: <MaskedSvgIcon src="/icons/x.svg" className="h-4 w-4" title="X" />,
   },
   {
     name: "Instagram",
     href: "https://www.instagram.com/iamn0tphage/",
-    icon: <MaskedSvgIcon src="/icons/Instagram-Icons.svg" className="h-4 w-4" title="Instagram" />,
+    icon: <MaskedSvgIcon src="/icons/instagram.svg" className="h-4 w-4" title="Instagram" />,
   },
   {
     name: "Red Note",
     href: "https://xhslink.com/m/3pQXApovmMO",
-    icon: <MaskedSvgIcon src="/icons/Xiaohongshu-Icons.svg" className="h-4 w-4" title="Red Note" />,
+    icon: <MaskedSvgIcon src="/icons/xiaohongshu.svg" className="h-4 w-4" title="Red Note" />,
   },
   {
     name: "Steam",
     href: "https://steamcommunity.com/profiles/76561198803581331/",
-    icon: <MaskedSvgIcon src="/icons/Steam-Icons.svg" className="h-4 w-4" title="Steam" />,
+    icon: <MaskedSvgIcon src="/icons/steam.svg" className="h-4 w-4" title="Steam" />,
   },
 ]
 
