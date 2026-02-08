@@ -45,14 +45,14 @@ const DIGITAL_ITEMS = [
   {
     title: "Counter Strike",
     image: "/images/the-world/digital/cs.webp",
-    className: "absolute top-[40%] left-[4%] rotate-[-9deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    className: "absolute top-[45%] left-[4%] rotate-[-9deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
     landscape: true,
     caption: "谁是人类？",
   },
   {
     title: "Overwatch",
     image: "/images/the-world/digital/overwatch.webp",
-    className: "absolute top-[-10%] left-[6%] rotate-[8deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    className: "absolute top-[0%] left-[6%] rotate-[8deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
     landscape: true,
     caption: "守望先锋国服停服纪念",
   },
@@ -66,7 +66,7 @@ const DIGITAL_ITEMS = [
   {
     title: "PUBG",
     image: "/images/the-world/digital/pubg.webp",
-    className: "absolute top-[-5%] right-[12%] rotate-[-6deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
+    className: "absolute top-[0%] right-[12%] rotate-[-6deg] w-[26rem] h-[23rem] min-h-0 flex flex-col",
     landscape: true,
     caption: "分工明确地吃鸡",
   },
@@ -91,31 +91,6 @@ export default function TheWorldPage() {
             <p className="mb-12 text-neutral-600 dark:text-neutral-400">
               Time stops. Only this page remains.
             </p>
-
-            <section className="mb-12 overflow-hidden rounded-3xl border border-neutral-200/80 bg-neutral-50/90 shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900/90">
-              <div className="px-6 pt-8 pb-6 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.25)]">
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-                  Physical World
-                </h2>
-              </div>
-              <DraggableCardContainer className="relative flex min-h-[90vh] w-full items-start justify-center overflow-clip px-4 pb-8">
-                {PHYSICAL_ITEMS.map((item) => (
-                  <DraggableCardBody key={item.title} className={item.className}>
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      width={320}
-                      height={320}
-                      className="pointer-events-none relative z-10 h-80 w-80 object-cover"
-                      unoptimized
-                    />
-                    <h3 className="mt-4 text-center text-2xl font-bold text-neutral-700 dark:text-neutral-300">
-                      {item.title}
-                    </h3>
-                  </DraggableCardBody>
-                ))}
-              </DraggableCardContainer>
-            </section>
 
             <section
               className="mb-12 overflow-hidden rounded-3xl border border-neutral-200/80 bg-neutral-50/90 shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900/90"
@@ -172,6 +147,32 @@ export default function TheWorldPage() {
                 </div>
               )}
             </section>
+
+            <section className="mb-12 overflow-hidden rounded-3xl border border-neutral-200/80 bg-neutral-50/90 shadow-sm dark:border-neutral-800/80 dark:bg-neutral-900/90">
+              <div className="px-6 pt-8 pb-6 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.25)]">
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                  Physical World
+                </h2>
+              </div>
+              <DraggableCardContainer className="relative flex min-h-[90vh] w-full items-start justify-center overflow-clip px-4 pb-8">
+                {PHYSICAL_ITEMS.map((item) => (
+                  <DraggableCardBody key={item.title} className={item.className}>
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      width={320}
+                      height={320}
+                      className="pointer-events-none relative z-10 h-80 w-80 object-cover"
+                      unoptimized
+                    />
+                    <h3 className="mt-4 text-center text-2xl font-bold text-neutral-700 dark:text-neutral-300">
+                      {item.title}
+                    </h3>
+                  </DraggableCardBody>
+                ))}
+              </DraggableCardContainer>
+            </section>
+
           </div>
         </main>
       </div>

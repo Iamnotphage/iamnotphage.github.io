@@ -34,7 +34,6 @@ const navLinks = [
   { label: "README", href: "/" },
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
-  { label: "Favorites", href: "/favorites" },
   { label: "「The World」", href: "/the-world" },
 ];
 

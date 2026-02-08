@@ -23,7 +23,6 @@ const navItems = [
   { name: "README", link: "/" },
   { name: "Projects", link: "/projects" },
   { name: "Blog", link: "/blog" },
-  { name: "Favorites", link: "/favorites" },
   { name: "「The World」", link: "/the-world" },
 ]
 
