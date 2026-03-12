@@ -8,15 +8,17 @@ import { SiteNavbar } from "@/components/site-navbar";
 const BIO_FIRST_LINE = "动物界｜脊索动物门｜哺乳纲｜灵长目｜人科｜人属｜智人";
 
 const BIO_PARAGRAPHS = [
-  "学生党，励志成为全栈开发者，喜欢编程与游戏。",
-  "探索新技术，分享知识。",
+  "苦命学生党，计算机科学&软件工程", 
+  "魔方爱好者，游戏爱好者，编程技术宅", 
+  "超低浓度二次元，业余推理小说&美剧狂热",
+  "后端开发学习中，偶尔玩前端，分享知识",
 ];
 
 const TECH_TAGS = [
   "FastAPI",
   "SpringBoot",
-  "Next.js",
   "LLM",
+  "Next.js",
   "Linux",
   "Docker",
 ];
