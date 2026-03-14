@@ -45,6 +45,15 @@ const PROJECTS: Project[] = [
     image: "/images/projects/project3.png",
     href: "https://github.com/Iamnotphage/MortarAid4PUBG",
   },
+  {
+    id: "4",
+    title: "myDBMS",
+    preview: "精简SQL编译器实现",
+    description: "西电编译原理大作业:精简SQL编译器实现",
+    techStack: "C, C++, Lex, Yacc",
+    image: "/images/projects/project4.png",
+    href: "https://github.com/Iamnotphage/myDBMS",
+  }
 ];
 
 export default function ProjectsPage() {
