@@ -38,20 +38,30 @@ const PROJECTS: Project[] = [
   },
   {
     id: "3",
+    title: "seekdb-2025",
+    preview: "第五届OceanBase数据库大赛",
+    description:
+      "在seekdb社区版基础上，优化带标量的全文索引检索的性能。设计并实现多模态RAG应用：支持图文混排PDF知识库的解析、多模态检索与图文关联推理，并在查询回答中提供精确可溯源的引用。",
+    techStack: "RAG, C++, OceanBase, seekdb",
+    image: "/images/projects/project3.png",
+    href: "https://github.com/Iamnotphage/seekdb-2025",
+  },
+  {
+    id: "4",
     title: "MortarAid4PUBG",
     preview: "PUBG迫击炮辅助测距工具",
     description: "(玩具项目)PUBG迫击炮测距工具(含仰角高程修正)",
     techStack: "Python",
-    image: "/images/projects/project3.png",
+    image: "/images/projects/project4.png",
     href: "https://github.com/Iamnotphage/MortarAid4PUBG",
   },
   {
-    id: "4",
+    id: "5",
     title: "myDBMS",
     preview: "精简SQL编译器实现",
     description: "西电编译原理大作业:精简SQL编译器实现",
     techStack: "C, C++, Lex, Yacc",
-    image: "/images/projects/project4.png",
+    image: "/images/projects/project5.png",
     href: "https://github.com/Iamnotphage/myDBMS",
   }
 ];
