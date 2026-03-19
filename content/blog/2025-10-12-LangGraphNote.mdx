@@ -1,0 +1,271 @@
+---
+title: "LangGraph学习笔记"
+date: "2025-10-12"
+description: "LangGraph基础学习笔记"
+tags: ["python", "langgraph", "langchain"]
+published: true
+categories: ["langgraph", "agent"]
+giscus_comments: true
+toc: true
+---
+
+
+推荐用`uv`管理环境，这是比较新的包/环境管理器，并且比`pip`和`conda`都快
+
+
+## LangGraph
+
+该部分来自2025年10月之前，随后LangChain发布了1.0版本，改变了现状。
+
+现在LangGraph更底层一点，LangChain 1.0之后的版本是更高层的框架
+
+LangChain1.0之后提供了更友好的高层抽象，比如预置的`agent`模式和`middleware`系统
+
+而LangGraph更像执行引擎
+
+
+> LangGraph的核心设计哲学是帮助开发者为Agent工作流增添更好的精度和控制，以适应现实世界系统的复杂性。
+
+### 前言
+
+前段时间刚入门LangGraph
+
+整理一下目前的进展&笔记
+
+LangChain基础部分试着按照官方文档运行了一遍，算是半个入门。
+
+需要设置的一些环境or前置准备如下:
+
+* Python版本3.11及以上
+* 虚拟环境`venv`或者`conda`会用（我用`uv`）
+* LangSmith API-KEY
+* OpenAI API-KEY (用的OpenRouter替代一下)
+* Tavily API-KEY
+
+给`OpenRouter`充了5USD
+
+相关依赖
+ * langchain_openai 
+ * langchain_core 
+ * langchain_community
+ * tavily-python
+环境变量手动设置export
+Jupyter Notebook这些常见的东西要会用
+
+### Chat Models
+
+`langgraph dev`命令开玩一下
+
+`ChatOpenAI()`的一个重要参数:
+
+`Temperature`控制模型输出的随机性或创造性，其中低温(接近0)的输出更具确定性和集中性。这对于需要准确性或事实响应的任务很有用。高温(接近1)有利于创造性任务或产生不同的响应。
+
+在LangChain中，Chat Models有一系列的默认方法，比stream()和invoke()
+Chat Models将Message作为输入输出的数据结构
+
+这些在LangChain基础中都有提及，主要看官方文档
+
+### Search Tools
+搜索工具只玩了一下Tavily和Serp
+
+
+### Graph基本组件
+
+一个简单的`Graph`由`State`,`Nodes`,`Edges`组成
+
+**`State`是自定义的一个类，继承`TypedDict`**
+
+```python
+from typing_extensions import TypedDict
+
+class State(TypedDict):
+	graph_state: str
+```
+
+
+`TypeDict`是python中用于类型检查的一个类
+
+所以定义`State`类将会构建一个固定类型的Key-Value对
+
+而`Node`简单来说就是Python函数，一般接受三种参数:
+
+1. 前文定义的`State`对象，`Node`可以访问键值对
+2. `RunnableConfig`对象，包含一些配置信息如`thread_id`等
+3. `Runtime`对象，包含一些运行时的上下文
+
+```python
+def node_1(state):
+	print("---Node 1---")
+	return {"graph_state": state['graph_state'] +" I am"}
+
+def node_2(state):
+	print("---Node 2---")
+	return {"graph_state": state['graph_state'] +" happy!"}
+
+def node_3(state):
+	print("---Node 3---")
+	return {"graph_state": state['graph_state'] +" sad!"}
+```
+
+
+`Edges`连接`Nodes`，定义了流程走向的逻辑，有四种类型:
+
+1. Normal Edges: 连接两个node
+2. ConditionalEdges: 调用函数来决定去哪一个node
+3. Entry Point: 类似dummy node或者虚拟节点，例如`START`
+4. Conditional Entry Point: 程序入口可以自定义选择
+
+```python
+import random
+from typing import Literal
+
+def decide_mood(state) -> Literal["node_2", "node_3"]:
+    
+    # Often, we will use state to decide on the next node to visit
+    user_input = state['graph_state'] 
+    
+    # Here, let's just do a 50 / 50 split between nodes 2, 3
+    if random.random() < 0.5:
+
+        # 50% of the time, we return Node 2
+        return "node_2"
+    
+    # 50% of the time, we return Node 3
+    return "node_3"
+```
+
+
+### Graph的构建
+
+主要利用`langgraph.graph`库中的`StateGraph`类
+
+用最初定义的`State`类创建`StateGraph`实例`builder`
+
+然后给这个实例`builder`添加结点和边，中间一般用到`START`和`END`这样的虚拟结点
+
+主要用到`.add_node()`和`.add_edge()`和`.add_conditional_edges()`
+
+![Screenshot 2024-08-20 at 3.11.22 PM.png](https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dba5f465f6e9a2482ad935_simple-graph1.png)
+
+最后编译这个`StateGraph`的实例`builder.compile`
+
+```python
+from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
+  
+
+# Build graph
+
+builder = StateGraph(State)
+builder.add_node("node_1", node_1)
+builder.add_node("node_2", node_2)
+builder.add_node("node_3", node_3)
+
+# Logic
+
+builder.add_edge(START, "node_1")
+builder.add_conditional_edges("node_1", decide_mood)
+builder.add_edge("node_2", END)
+builder.add_edge("node_3", END)
+
+# Add
+graph = builder.compile()
+
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))
+```
+
+注意这里`compile()`返回的是一个`CompiledStateGraph`对象
+
+而这个`CompiledStateGraph`继承了`Pregel`和`Generic`类
+
+`Pregel`是Google提出的大规模分布式图计算平台，专门用来解决网页链接分析、社交数据挖掘等实际应用中涉及的大规模分布式图计算问题。
+
+不妨将这个`CompiledStateGraph`实例命名为`graph`
+
+`graph`由于继承了`Pregel`类，可以调用`invoke()`
+
+`invoke()`传入的参数是一个`dict`键值对，它是同步执行的，换言之，它的每一步必须等待前一个结点的输出
+
+### Chain
+
+![Screenshot 2024-08-21 at 9.24.03 AM.png](https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbab08dd607b08df5e1101_chain1.png)
+
+Chat models都依靠`Messages`,在LangChain中`Messages`可以分为四类(在`langchain_core.messages`库中)
+
+* AIMessage
+* HumanMessage
+* ToolMessage
+* SystemMessage
+
+这几个类都继承BaseMessage，而BaseMessage有几个常用的属性：
+
+* content: message的内容
+* name: (可选) message的作者
+* response_metadata: (可选) 一系列元数据字典
+
+中间的LLM结点我用ChatOpenAI()新建一个llm对象
+
+可以考虑绑定`tools`, `tools`是一个python函数，通过调用`llm.bind_tools(`)绑定到LLM上
+
+```python
+def multiply(a: int, b: int) -> int:
+    """Multiply a and b.
+
+    Args:
+        a: first int
+        b: second int
+    """
+    return a * b
+
+llm_with_tools = llm.bind_tools([multiply])
+```
+
+### 将消息作为状态
+
+定义`MessagesState`(`TypedDict`类)，但是属性值默认会被覆盖(override)
+
+所以引入一个新概念Reducer，用于更新结点的状态
+
+`Reducer`可以简单理解为`State`类中，每个属性值的键Key都有自己的`Reducer`函数
+
+如果没有显式指定这个`reducer function`，那么这个属性的值Value就是默认覆盖的形式
+
+```python
+from typing import Annotated
+from langgraph.graph.message import add_messages
+
+class MessagesState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+```
+
+这个`reducer function`指定了我们更新状态的规则
+
+当然`langgraph.graph`库中有默认的`MessagesState`不需要我们手搓实现
+
+`langgraph.prebuilt`库，简单看了眼`ToolNode`类和`tools_condition()`
+
+`ToolNode`类创建实例时，传入list
+
+`tools_condition()`会返回`"tool"`或者`"__end__"`
+
+如果调用了tool node，结果将会返回`ToolMessage`类型的数据给用户
+
+### Agent
+
+前文提及，工具调用后，返回的ToolMessage给用户，如果这个消息传给模型或者传给下一个工具呢？
+
+这就是**ReAct**的思路，通用Agent架构
+
+[ReAct论文链接](https://react-lm.github.io/)
+
+> ReAct: Synergizing Reasonging and Acting in Language Models
+
+![Screenshot 2024-08-21 at 12.45.43 PM.png](https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/66dbac0b4a2c1e5e02f3e78b_agent2.png)
+
+总的来说，大概是这样的概括
+
+* act: 大模型调用工具
+* observe: 工具输出返回给大模型
+* reason: 大模型再进一步推理
+
