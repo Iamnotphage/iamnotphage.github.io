@@ -20,21 +20,21 @@ type Project = {
 const PROJECTS: Project[] = [
   {
     id: "1",
-    title: "This Website",
-    preview: "Next.js 个人网站项目",
-    description: "此站点主要用Next.js框架搭建，用Velite渲染mdx文章，ui组件来自各种开源网站，部署到Github Pages，并利用Cloudflare全球CDN加速。",
-    techStack: "Next.js, Velite, Cloudflare",
-    image: "/images/avatar.webp",
-    href: "https://github.com/Iamnotphage/iamnotphage.github.io",
+    title: "myDBMS",
+    preview: "精简SQL编译器实现",
+    description: "西电编译原理大作业:精简SQL编译器实现",
+    techStack: "C, C++, Lex, Yacc",
+    image: "/images/projects/project5.png",
+    href: "https://github.com/Iamnotphage/myDBMS",
   },
   {
     id: "2",
-    title: "CosyVoice vLLM",
-    preview: "CosyVoice vLLM服务端",
-    description: "基于社区优化vllm的版本，构建FastAPI服务端，支持零样本语音克隆、跨语种语音克隆、自然语言指令控制等多种语音合成模式，消费级GPU首包延迟500ms。",
-    techStack: "FastAPI, vLLM, Python",
-    image: "/images/projects/project2.png",
-    href: "https://github.com/Iamnotphage/CosyVoice-vllm",
+    title: "MortarAid4PUBG",
+    preview: "PUBG迫击炮辅助测距工具",
+    description: "(玩具项目)PUBG迫击炮测距工具(含仰角高程修正)",
+    techStack: "Python",
+    image: "/images/projects/project4.png",
+    href: "https://github.com/Iamnotphage/MortarAid4PUBG",
   },
   {
     id: "3",
@@ -48,21 +48,30 @@ const PROJECTS: Project[] = [
   },
   {
     id: "4",
-    title: "MortarAid4PUBG",
-    preview: "PUBG迫击炮辅助测距工具",
-    description: "(玩具项目)PUBG迫击炮测距工具(含仰角高程修正)",
-    techStack: "Python",
-    image: "/images/projects/project4.png",
-    href: "https://github.com/Iamnotphage/MortarAid4PUBG",
+    title: "CosyVoice vLLM",
+    preview: "CosyVoice vLLM服务端",
+    description: "基于社区优化vllm的版本，构建FastAPI服务端，支持零样本语音克隆、跨语种语音克隆、自然语言指令控制等多种语音合成模式，消费级GPU首包延迟500ms。",
+    techStack: "FastAPI, vLLM, Python",
+    image: "/images/projects/project2.png",
+    href: "https://github.com/Iamnotphage/CosyVoice-vllm",
   },
   {
     id: "5",
-    title: "myDBMS",
-    preview: "精简SQL编译器实现",
-    description: "西电编译原理大作业:精简SQL编译器实现",
-    techStack: "C, C++, Lex, Yacc",
-    image: "/images/projects/project5.png",
-    href: "https://github.com/Iamnotphage/myDBMS",
+    title: "This Website",
+    preview: "Next.js 个人网站项目",
+    description: "此站点主要用Next.js框架搭建，用Velite渲染mdx文章，ui组件来自各种开源网站，部署到Github Pages，并利用Cloudflare全球CDN加速。",
+    techStack: "Next.js, Velite, Cloudflare",
+    image: "/images/avatar.webp",
+    href: "https://github.com/Iamnotphage/iamnotphage.github.io",
+  },
+  {
+    id: "6",
+    title: "MT-AutoOptimize",
+    preview: "Coding Agent for MT-3000",
+    description: "LangGraph搭建ReAct循环，仿照Gemini-CLI的Coding Agent",
+    techStack: "LangGraph, Python, REPL",
+    image: "/images/projects/project6.png",
+    href: "https://github.com/Iamnotphage/MT-AutoOptimize",
   }
 ];
 
@@ -87,9 +96,11 @@ export default function ProjectsPage() {
             </p>
 
             <div className="flex flex-wrap justify-center gap-8">
-              {PROJECTS.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+              {[...PROJECTS]
+                .sort((a, b) => Number(b.id) - Number(a.id))
+                .map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
             </div>
           </div>
         </main>
