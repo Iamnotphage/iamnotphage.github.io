@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { posts } from '#velite'
 import { GiscusComments } from '@/components/giscus-comments'
 import { MDXContent } from '@/components/mdx-content'
+import { BlogTableOfContents } from '@/components/blog-table-of-contents'
 import { format } from 'date-fns'
-import { TextureOverlay } from '@/components/ui/texture-overlay'
 
 interface PostPageProps {
   params: Promise<{
@@ -26,74 +26,115 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound()
   }
 
+  const primaryCategory = post.categories?.[0]
+  const relatedPosts =
+    primaryCategory
+      ? [...posts]
+          .filter(p => p.published)
+          .filter(p => p.slug !== post.slug)
+          .filter(p => (p.categories ?? []).includes(primaryCategory))
+          .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+          .slice(0, 8)
+      : []
+
+  const hasLeftSidebar = Boolean(primaryCategory && relatedPosts.length > 0)
+  const hasRightSidebar = post.toc !== false
+
   return (
     <div className="relative">
-      <div className="relative z-10 border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/80">
-        <div className="container mx-auto max-w-6xl px-6 py-4 lg:py-5">
-          <Link
-            href="/blog"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to blog
-          </Link>
+      <div className="relative z-10 border-b border-neutral-200 bg-white/80 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/70">
+        <div className="container mx-auto max-w-[92rem] px-6 py-6">
+          <div className="mx-auto w-full max-w-[56rem] 2xl:max-w-[60rem]">
+            <Link
+              href="/blog"
+              className="mb-6 inline-flex items-center gap-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to blog
+            </Link>
 
-          <div className="mb-4 flex flex-wrap gap-2">
-            {post.tags?.map(tag => (
-              <span
-                key={tag}
-                className="rounded-full bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-              >
-                {tag}
-              </span>
-            ))}
-            {post.categories?.map(cat => (
-              <span
-                key={cat}
-                className="rounded-full bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-              >
-                {cat}
-              </span>
-            ))}
-          </div>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {post.tags?.map(tag => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
+                >
+                  {tag}
+                </span>
+              ))}
+              {post.categories?.map(cat => (
+                <span
+                  key={cat}
+                  className="rounded-full bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
 
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 lg:text-5xl">
-            {post.title}
-          </h1>
+            <h1 className="mb-3 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 lg:text-4xl">
+              {post.title}
+            </h1>
 
-          {post.description && (
-            <p className="mb-4 text-lg text-neutral-600 dark:text-neutral-400">
-              {post.description}
-            </p>
-          )}
+            {post.description && (
+              <p className="mb-3 text-base leading-7 text-neutral-600 dark:text-neutral-400">
+                {post.description}
+              </p>
+            )}
 
-          <div className="flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-500">
-            <time>{format(new Date(post.date), 'MMMM d, yyyy')}</time>
+            <div className="flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-500">
+              <time>{format(new Date(post.date), 'MMMM d, yyyy')}</time>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Content - 仅此区域有 grid 纹理；矩形阅读区与封面无缝衔接，最大宽度与 blog dock 一致 960px */}
-      <div className="relative bg-white dark:bg-neutral-950">
-        <TextureOverlay texture="grid" opacityLight={0.12} opacityDark={0.3} className="z-0 pointer-events-none" />
-        <div className="relative z-10 mx-auto max-w-[960px] px-6">
-          <article>
-            {/* 矩形阅读区：与封面无缝衔接，左右下边框；内边距加大 */}
-            <div className="border-x border-b border-neutral-200 dark:border-neutral-800 rounded-b-2xl bg-white dark:bg-neutral-950 p-8">
+      {/* Content - 文档式三栏布局；去掉详情页背景网格 */}
+      <div className="bg-white dark:bg-neutral-950">
+        <div className="container mx-auto max-w-[92rem] px-6 py-10">
+          <div className="relative xl:grid xl:grid-cols-[16rem_minmax(0,56rem)_16rem] xl:justify-center xl:gap-x-8 2xl:grid-cols-[17rem_minmax(0,60rem)_17rem] 2xl:gap-x-10">
+            {/* Left: related posts */}
+            <aside className="hidden xl:block">
+              {hasLeftSidebar ? (
+                <div className="sticky top-24 pr-2">
+                  <div className="mb-3 text-base font-semibold text-neutral-800 dark:text-neutral-200">
+                    同类文章
+                  </div>
+                  <div className="space-y-2 border-l border-neutral-200 pl-4 dark:border-neutral-800">
+                    {relatedPosts.map(p => (
+                      <Link
+                        key={p.slug}
+                        href={p.permalink}
+                        className="block py-1 text-[15px] leading-6 text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200"
+                      >
+                        {p.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div aria-hidden className="h-px w-full" />
+              )}
+            </aside>
+
+            {/* Middle: article */}
+            <article className="min-w-0">
+              <div className="mx-auto w-full max-w-[56rem] 2xl:max-w-[60rem] xl:max-w-none">
                 <div
                   data-article-body
-                  className="prose prose-lg prose-neutral max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-headings:font-bold prose-headings:tracking-tight prose-h2:mt-10 prose-h2:mb-4 prose-h3:mt-8 prose-h3:mb-3 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-green-400 prose-li:my-1 prose-ul:my-4 prose-ol:my-4 prose-code:rounded prose-code:bg-neutral-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-green-700 prose-code:before:content-none prose-code:after:content-none dark:prose-code:bg-neutral-800 dark:prose-code:text-green-400 prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0 prose-table:my-6 prose-th:bg-neutral-100 dark:prose-th:bg-neutral-800 prose-blockquote:border-l-green-500 dark:prose-blockquote:border-l-green-500 prose-blockquote:bg-emerald-50 dark:prose-blockquote:bg-neutral-900/50 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-hr:my-8"
+                  className="prose prose-lg prose-neutral max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-headings:font-bold prose-headings:tracking-tight prose-h2:mt-10 prose-h2:mb-4 prose-h3:mt-8 prose-h3:mb-3 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-green-400 prose-li:my-1 prose-ul:my-4 prose-ol:my-4 prose-code:rounded-sm prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-px prose-code:text-[0.9em] prose-code:text-green-700 prose-code:before:content-none prose-code:after:content-none dark:prose-code:bg-neutral-800 dark:prose-code:text-green-400 prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0 prose-table:my-6 prose-th:bg-neutral-100 dark:prose-th:bg-neutral-800 prose-blockquote:border-l-green-500 dark:prose-blockquote:border-l-green-500 prose-blockquote:bg-emerald-50 dark:prose-blockquote:bg-neutral-900/50 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-hr:my-8"
                 >
                   <MDXContent code={post.content} />
                 </div>
 
                 {post.giscus_comments !== false && (
-                  <GiscusComments show />
+                  <div className="mt-12">
+                    <GiscusComments show />
+                  </div>
                 )}
 
-                {/* Footer */}
                 <div className="mt-12 border-t border-neutral-200 pt-8 dark:border-neutral-800">
                   <Link
                     href="/blog"
@@ -106,7 +147,17 @@ export default async function PostPage({ params }: PostPageProps) {
                   </Link>
                 </div>
               </div>
-          </article>
+            </article>
+
+            {/* Right: toc */}
+            <aside className="hidden xl:block">
+              {hasRightSidebar ? (
+                <BlogTableOfContents className="sticky top-24 pl-2" />
+              ) : (
+                <div aria-hidden className="h-px w-full" />
+              )}
+            </aside>
+          </div>
         </div>
       </div>
     </div>

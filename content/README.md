@@ -11,6 +11,7 @@
 | `description` | string | 是 | 简短描述，用于列表与 SEO |
 | `tags` | string[] | 是 | 标签数组，如 `["ssh", "tutorial"]` |
 | `published` | boolean | 否 | 是否公开，默认 `true` |
+| `pinned` | boolean | 否 | 是否置顶到 blog 列表前方，默认 `false` |
 | `categories` | string[] | 否 | 分类数组，如 `["西电相关", "项目"]`，默认 `[]` |
 | `giscus_comments` | boolean | 否 | 是否开启 Giscus 评论，默认 `true` |
 | `toc` | boolean | 否 | 是否显示正文左侧目录，默认 `true` |
@@ -24,6 +25,7 @@ date: "2024-12-05"
 description: "一句话描述"
 tags: ["tag1", "tag2"]
 published: true
+pinned: false
 categories: ["分类A", "分类B"]
 giscus_comments: true
 toc: true

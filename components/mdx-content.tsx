@@ -152,7 +152,6 @@ function H1({ children, ...props }: ComponentProps<'h1'>) {
       {...props}
       className="mt-10 mb-5 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100"
     >
-      <span className="mr-2 text-green-600 dark:text-green-400" aria-hidden>#</span>
       {children}
     </h1>
   )
@@ -164,7 +163,6 @@ function H2({ children, ...props }: ComponentProps<'h2'>) {
       {...props}
       className="mt-12 mb-4 text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100"
     >
-      <span className="mr-2 text-green-600 dark:text-green-400" aria-hidden>##</span>
       {children}
     </h2>
   )
@@ -176,7 +174,6 @@ function H3({ children, ...props }: ComponentProps<'h3'>) {
       {...props}
       className="mt-8 mb-3 text-xl font-semibold tracking-tight text-neutral-800 dark:text-neutral-200"
     >
-      <span className="mr-2 text-green-500 dark:text-green-500" aria-hidden>###</span>
       {children}
     </h3>
   )
@@ -188,7 +185,6 @@ function H4({ children, ...props }: ComponentProps<'h4'>) {
       {...props}
       className="mt-6 mb-2 text-lg font-semibold text-neutral-700 dark:text-neutral-300"
     >
-      <span className="mr-2 text-green-400 dark:text-green-600" aria-hidden>####</span>
       {children}
     </h4>
   )
@@ -196,7 +192,7 @@ function H4({ children, ...props }: ComponentProps<'h4'>) {
 
 // Inline code（code block 内的 code 由 data-language 区分，不做内联样式）
 const inlineCodeClass =
-  'rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-sm text-neutral-800 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 break-all'
+  'rounded-sm border border-neutral-300/90 bg-neutral-100 px-1 py-px font-mono text-[0.9em] text-neutral-800 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 break-all'
 
 function Code({
   children,
