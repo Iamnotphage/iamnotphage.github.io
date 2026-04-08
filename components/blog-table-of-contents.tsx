@@ -7,7 +7,11 @@ export type TocItem = { id: string; text: string; level: number }
 
 const ARTICLE_SELECTOR = '[data-article-body]'
 
-export function BlogTableOfContents() {
+interface BlogTableOfContentsProps {
+  className?: string
+}
+
+export function BlogTableOfContents({ className }: BlogTableOfContentsProps) {
   const [items, setItems] = useState<TocItem[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -20,7 +24,8 @@ export function BlogTableOfContents() {
     headings.forEach((el) => {
       const id = el.id
       if (!id) return
-      const text = el.textContent?.replace(/^#+\s*/, '')?.trim() ?? ''
+      // autolink-headings 可能会插入额外的可见/不可见节点，这里只取纯文本并做一次轻量清洗
+      const text = el.textContent?.trim() ?? ''
       const level = parseInt(el.tagName.charAt(1), 10)
       list.push({ id, text, level })
     })
@@ -35,7 +40,11 @@ export function BlogTableOfContents() {
           }
         }
       },
-      { rootMargin: '-80px 0% -80% 0%', threshold: 0 }
+      {
+        root: null,
+        rootMargin: '-96px 0% -72% 0%',
+        threshold: 0,
+      }
     )
 
     list.forEach(({ id }) => {
@@ -50,22 +59,25 @@ export function BlogTableOfContents() {
   return (
     <nav
       aria-label="Table of contents"
-      className="sticky top-24 hidden lg:block w-52 shrink-0 space-y-2 text-sm"
+      className={cn('space-y-2 text-sm', className)}
     >
       <div className="font-medium text-neutral-700 dark:text-neutral-300">目录</div>
-      <ul className="space-y-1.5 border-l border-neutral-200 dark:border-neutral-700 pl-3">
+      <ul className="space-y-1.5">
         {items.map(({ id, text, level }) => (
           <li
             key={id}
             style={{ paddingLeft: (level - 2) * 10 }}
             className={cn(
-              'border-l-2 -ml-px pl-2 transition-colors',
+              'transition-colors',
               activeId === id
-                ? 'border-green-500 text-green-600 dark:text-green-400'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
+                ? 'font-medium text-green-600 dark:text-green-400'
+                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200'
             )}
           >
-            <a href={`#${id}`} className="block py-0.5 leading-snug">
+            <a
+              href={`#${id}`}
+              className="block py-0.5 leading-snug"
+            >
               {text}
             </a>
           </li>

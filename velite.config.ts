@@ -1,10 +1,12 @@
 import { defineConfig, defineCollection, s } from 'velite'
 import rehypePrettyCode from 'rehype-pretty-code'
 import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import remarkGemoji from 'remark-gemoji'
+import rehypeMermaid from 'rehype-mermaid'
 import { visit } from 'unist-util-visit'
 import type { Root } from 'hast'
 import type { Root as MdastRoot } from 'mdast'
@@ -36,6 +38,86 @@ function remarkDoubleBlankSpacer() {
   }
 }
 
+/** 支持 GitHub Flavored Markdown alerts，避免 remark-alerts 生成 raw/html 节点导致 MDX 构建报错 */
+function remarkGitHubAlerts() {
+  // 只匹配同一行内的可选标题：\s* 会吃掉 \n，导致下一行正文被误当成自定义标题（如 [!NOTE]\n一般提示）
+  const markerPattern =
+    /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:[ \t]+([^\r\n]+))?/i
+  const defaultTitles: Record<string, string> = {
+    note: 'Note',
+    tip: 'Tip',
+    important: 'Important',
+    warning: 'Warning',
+    caution: 'Caution',
+  }
+
+  return (tree: MdastRoot) => {
+    visit(tree, 'blockquote', (node) => {
+      const first = node.children[0]
+      if (!first || first.type !== 'paragraph' || first.children.length === 0) return
+
+      const lead = first.children[0]
+      if (lead.type !== 'text') return
+
+      const match = lead.value.match(markerPattern)
+      if (!match) return
+
+      const type = match[1].toLowerCase()
+      const title = (match[2]?.trim() || defaultTitles[type] || match[1]).trim()
+      const remaining = lead.value.slice(match[0].length).trimStart()
+
+      if (remaining) {
+        lead.value = remaining
+      } else {
+        first.children.splice(0, 1)
+        if (first.children.length === 0) {
+          node.children.shift()
+        }
+      }
+
+      node.data = {
+        hName: 'div',
+        hProperties: {
+          className: ['markdown-alert', `markdown-alert-${type}`],
+        },
+      }
+
+      node.children.unshift({
+        type: 'paragraph',
+        data: {
+          hName: 'p',
+          hProperties: {
+            className: ['markdown-alert-title'],
+          },
+        },
+        children: [
+          {
+            type: 'text',
+            value: '',
+            data: {
+              hName: 'span',
+              hProperties: {
+                className: ['markdown-alert-title-icon'],
+                'aria-hidden': 'true',
+              },
+            },
+          },
+          {
+            type: 'text',
+            value: title,
+            data: {
+              hName: 'span',
+              hProperties: {
+                className: ['markdown-alert-title-text'],
+              },
+            },
+          },
+        ],
+      })
+    })
+  }
+}
+
 /** 将 GitHub blob 图片链接转为 raw 直链，否则 <img> 会拿到 HTML 无法显示 */
 function rehypeGitHubRawImages() {
   return (tree: Root) => {
@@ -61,6 +143,7 @@ const posts = defineCollection({
       description: s.string(),
       tags: s.array(s.string()),
       published: s.boolean().default(true),
+      pinned: s.boolean().optional().default(false),
       categories: s.array(s.string()).optional().default([]),
       giscus_comments: s.boolean().optional().default(true),
       toc: s.boolean().optional().default(true),
@@ -83,7 +166,19 @@ export default defineConfig({
   mdx: {
     rehypePlugins: [
       rehypeSlug,
+      [
+        rehypeAutolinkHeadings,
+        {
+          behavior: 'wrap',
+          properties: {
+            className: ['heading-anchor'],
+            ariaLabel: 'Link to heading',
+          },
+        },
+      ],
       rehypeGitHubRawImages,
+      // Mermaid 必须在 pretty-code 之前，避免先被高亮器改写
+      [rehypeMermaid, { strategy: 'inline-svg' }],
       [rehypePrettyCode, { theme: 'one-dark-pro' }],
       [
         rehypeKatex,
@@ -94,6 +189,6 @@ export default defineConfig({
         },
       ],
     ],
-    remarkPlugins: [remarkGfm, remarkMath, remarkGemoji, remarkDoubleBlankSpacer],
+    remarkPlugins: [remarkGfm, remarkGitHubAlerts, remarkMath, remarkGemoji, remarkDoubleBlankSpacer],
   },
 })

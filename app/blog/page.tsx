@@ -28,7 +28,10 @@ function BlogPageContent() {
     () =>
       [...posts]
         .filter(post => post.published)
-        .sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))),
+        .sort((a, b) => {
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+          return compareDesc(new Date(a.date), new Date(b.date))
+        }),
     []
   )
   const allCategories = useMemo(() => {
@@ -82,23 +85,18 @@ function BlogPageContent() {
 
   return (
     <div className="relative">
-      <div className="relative z-10 border-b border-neutral-200 bg-neutral-50/80 dark:border-neutral-800 dark:bg-neutral-900/80">
-        <div className="container mx-auto max-w-6xl px-6 py-4 lg:py-6">
-          <div className="space-y-6">
-            <h1 className="text-5xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 lg:text-6xl pb-1">
-              Blog
-            </h1>
-            <p className="max-w-2xl text-lg text-neutral-500 dark:text-neutral-400">
-              Thoughts on technology, programming, and everything in between.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="relative min-h-[40vh] bg-white dark:bg-neutral-950">
         {/* Posts Grid - 仅此区域有 grid 纹理 */}
         <TextureOverlay texture="grid" opacityLight={0.12} opacityDark={0.3} className="z-0 pointer-events-none" />
-        <div className="relative z-10 container mx-auto max-w-6xl px-6 pt-8 pb-16">
+        <div className="relative z-10 container mx-auto max-w-6xl px-6 pt-12 pb-16">
+          <div className="mb-10">
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+              Blog
+            </h1>
+            <p className="text-neutral-600 dark:text-neutral-400">
+              Thoughts on technology, programming, and everything in between.
+            </p>
+          </div>
           {/* Category filters（搜索请用顶部 dock 右侧「搜索」或 ⌘K） */}
           <div className="mb-6 flex flex-wrap items-center gap-3 text-sm">
             {allCategories.length > 0 && (
@@ -131,6 +129,30 @@ function BlogPageContent() {
                   <Link href={post.permalink} className="block">
                     {/* Tags & Categories 仅展示 */}
                     <div className="mb-3 flex flex-wrap gap-2">
+                      {post.pinned ? (
+                        <span
+                          className="inline-flex items-center rounded-full bg-amber-100/90 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                          aria-label="Pinned post"
+                          title="Pinned post"
+                        >
+                          <svg
+                            className="h-3 w-3"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M15 3l6 6" />
+                            <path d="M9 7l8 8" />
+                            <path d="M6 10l8 8" />
+                            <path d="M11 5l8 8" />
+                            <path d="M8 14l-5 7 7-5" />
+                          </svg>
+                        </span>
+                      ) : null}
                       {post.tags?.slice(0, 3).map(tag => (
                         <span
                           key={tag}
