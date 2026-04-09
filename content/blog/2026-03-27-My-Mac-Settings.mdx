@@ -1,0 +1,109 @@
+---
+title: "分享一下个人MacOS相关配置"
+date: "2026-03-27"
+description: "MacOS个人编码/工作环境配置分享"
+tags: ["macos", "bash"]
+published: true
+pinned: false
+categories: ["杂项"]
+giscus_comments: true
+toc: true
+---
+
+> [!NOTE]
+> 简单分享一下最近配置的比较舒服的编码环境
+
+## 终端
+
+之前用的系统自带的`Terminal`配上`oh-my-zsh`
+
+用了一段时间，有点腻了，而且`.zshrc`被写入太多内容了，一点也不优雅
+
+> Science is elegant.
+
+现在用Ghostty + Starship配色方案
+
+Ghostty挺舒服的，支持选项卡和分割，全屏终端下，多任务协作很方便。
+
+官方说还支持GPU加速渲染和更多的字符支持、并且支持Kitty协议
+
+Starship是用Rust写的开源的项目，可以自定义自己独特主题的shell（当然这部分交给AI也很轻松）
+
+而且这个主题配色不会再写一大堆到我的`~/.zshrc`了，只需要修改`starship.toml`就行
+
+展示一下效果:
+
+![ghostty](/images/blog/2026-03-27-My-Mac-Settings/ghostty.webp)
+
+可以`command + t`新建窗口，然后用`command + 数字键`切换选项卡
+
+## 常用命令
+
+* `brew`: Mac上的包管理器，必装
+* `eza`: 可以说是`ls`的现代替代，可读性更好一点
+* `ripgrep`: 如其名字一样，送`grep`入土了说是，递归搜索实测确实比`grep`快不少
+
+初次之外`yazi`很好用
+
+特别是 `yazi` 在终端中浏览文件非常丝滑
+
+![yazi](/images/blog/2026-03-27-My-Mac-Settings/yazi.webp)
+
+自己整理几个自己常用的`yazi`命令
+
+`yazi`继承了不少vim的操作习惯：
+
+| 类别     | 快捷键                                | 功能                        |
+| ------ | ---------------------------------- | ------------------------- |
+| 移动     | 方向键 或 `h j k l`, `gg`, `G` | 上下左右移动；`gg` 跳到顶部；`G` 跳到末尾 |
+| 选中     | `Space`                            | 选中文件，可连续选择多个              |
+| 文件操作   | `y`, `x`, `d`                    | 复制 / 剪切 / 删除              |
+| 新建     | `a`, `A`                          | 新建文件 / 新建文件夹              |
+| 显示隐藏文件 | `.`                                | 显示 / 隐藏隐藏文件           |
+
+## 常用软件
+
+### 基础设施
+
+* Docker Desktop: 隔离环境
+* Ollama: 其实也就用过embedding模型
+* SSH: vscode/cursor的ssh插件就够用，重量级工作连服务器干
+
+### IDE
+
+* VSCode: 没什么好说的
+* CLion + IDEA + PyCharm: 仍有一席之地
+* Cursor: Auto模式写写简单任务，比如shell脚本、前端小任务
+* Antigravity: 其实没用过几次
+* Cherry Studio: 薅到的chat API一般放进去问点小问题
+
+然后是几个CLI工具，都不用介绍
+
+* Claude Code
+* Codex
+* Gemini
+* OpenCode
+
+### 笔记整理
+
+* [Obsidian](https://obsidian.md/): 配合git管理
+
+Notion也有用过，好看是好看，但是，不是很放心不能本地保存
+
+## 小工具
+
+* [RunCat](https://kyome.io/runcat/?lang=en): 监控CPU，内存，存储等状态，任务栏会有一只奔跑的🐱
+* [BetterDisplay](https://github.com/waydabber/BetterDisplay): 兼容外接显示器，因为之前买的是2K显示器，原生不太不兼容，这个软件可以强兼2K
+* [EasyDict](https://github.com/tisfeng/easydict): 开源项目，翻译很好用，快捷键呼出，还能支持OCR
+* [CC Switch](https://github.com/farion1231/cc-switch): 确实好用，但是最好也是一步步从自己配置`bashrc`, `.toml`, `settings.json`这种文件过来的，不然你都不知道它在做什么
+* [SakuraFRP](https://www.natfrp.com/): 免费的FRP，玩玩小游戏内网穿透一下，效果还可以
+* [Cleaner One Pro](https://cleanerone.trendmicro.com/): 存储清理软件，免费的功能就够用了
+* [Cap](https://github.com/CapSoftware/Cap): 一个录屏软件，当然系统自带的也够用
+* [FigPlayer](https://apps.apple.com/us/app/fig-player-play-mp4-mkv-mp3/id1612400976?mt=12): Mac上对标Pot Player，不过我用的也不多，影音娱乐需求都在windows上解决了
+
+---
+
+下面是部署到有显卡的服务器的小玩具
+
+* [Z-Image](https://www.modelscope.cn/models/Tongyi-MAI/Z-Image): 千问实验室搞出来的文生图小模型，效果挺好的，特别是图片中的文字不会乱，而且速度很快，最重要的是本地部署没有监管🌚🌚
+* [CosyVoice](https://www.modelscope.cn/models/FunAudioLLM/Fun-CosyVoice3-0.5B-2512): 基于LLM的TTS，生成语音的，多语言/方言，说话效果还可以
