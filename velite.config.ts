@@ -11,6 +11,48 @@ import { visit } from 'unist-util-visit'
 import type { Root } from 'hast'
 import type { Root as MdastRoot } from 'mdast'
 
+/** 兼容单行三反引号：```foo``` -> 代码块（默认 text），避免被 mdast 解析成 inlineCode */
+function remarkSingleLineFencedCode() {
+  return (tree: MdastRoot, file?: { value?: unknown }) => {
+    const source = typeof file?.value === 'string' ? file.value : ''
+    if (!source) return
+
+    visit(tree, 'paragraph', (node, index, parent) => {
+      if (node.children.length !== 1) return
+
+      const only = node.children[0]
+      if (only.type !== 'inlineCode' || !node.position) return
+      if (typeof index !== 'number' || !parent || !('children' in parent) || !Array.isArray(parent.children)) return
+
+      const startOffset = node.position.start.offset
+      const endOffset = node.position.end.offset
+      if (typeof startOffset !== 'number' || typeof endOffset !== 'number') return
+
+      const raw = source.slice(startOffset, endOffset).trim()
+      if (!/^```[^`\r\n]+```$/.test(raw)) return
+
+      parent.children[index] = {
+        type: 'code',
+        lang: 'text',
+        meta: null,
+        value: only.value,
+        position: node.position,
+      }
+    })
+  }
+}
+
+/** 未显式声明语言的 fenced code block 默认按 text 处理 */
+function remarkDefaultCodeLanguage() {
+  return (tree: MdastRoot) => {
+    visit(tree, 'code', (node) => {
+      if (!node.lang || !node.lang.trim()) {
+        node.lang = 'text'
+      }
+    })
+  }
+}
+
 /** 两个及以上连续空行时插入可见间距：在 mdast 中插入一个会渲染为 div 的占位节点 */
 function remarkDoubleBlankSpacer() {
   return (tree: MdastRoot) => {
@@ -189,6 +231,6 @@ export default defineConfig({
         },
       ],
     ],
-    remarkPlugins: [remarkGfm, remarkGitHubAlerts, remarkMath, remarkGemoji, remarkDoubleBlankSpacer],
+    remarkPlugins: [remarkGfm, remarkSingleLineFencedCode, remarkDefaultCodeLanguage, remarkGitHubAlerts, remarkMath, remarkGemoji, remarkDoubleBlankSpacer],
   },
 })
