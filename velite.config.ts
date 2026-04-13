@@ -17,11 +17,12 @@ function remarkSingleLineFencedCode() {
     const source = typeof file?.value === 'string' ? file.value : ''
     if (!source) return
 
-    visit(tree, 'paragraph', (node) => {
+    visit(tree, 'paragraph', (node, index, parent) => {
       if (node.children.length !== 1) return
 
       const only = node.children[0]
       if (only.type !== 'inlineCode' || !node.position) return
+      if (typeof index !== 'number' || !parent || !('children' in parent) || !Array.isArray(parent.children)) return
 
       const startOffset = node.position.start.offset
       const endOffset = node.position.end.offset
@@ -30,11 +31,13 @@ function remarkSingleLineFencedCode() {
       const raw = source.slice(startOffset, endOffset).trim()
       if (!/^```[^`\r\n]+```$/.test(raw)) return
 
-      node.type = 'code'
-      ;(node as unknown as { lang?: string; meta?: string | null; value?: string }).lang = 'text'
-      ;(node as unknown as { lang?: string; meta?: string | null; value?: string }).meta = null
-      ;(node as unknown as { lang?: string; meta?: string | null; value?: string }).value = only.value
-      delete (node as unknown as { children?: unknown }).children
+      parent.children[index] = {
+        type: 'code',
+        lang: 'text',
+        meta: null,
+        value: only.value,
+        position: node.position,
+      }
     })
   }
 }

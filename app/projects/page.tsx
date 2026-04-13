@@ -66,12 +66,12 @@ const PROJECTS: Project[] = [
   },
   {
     id: "6",
-    title: "MT-AutoOptimize",
+    title: "MT-Agent",
     preview: "Coding Agent for MT-3000",
     description: "LangGraph搭建ReAct循环，仿照Gemini-CLI的Coding Agent",
     techStack: "LangGraph, Python, REPL",
     image: "/images/projects/project6.png",
-    href: "https://github.com/Iamnotphage/MT-AutoOptimize",
+    href: "https://github.com/Iamnotphage/MT-Agent",
   }
 ];
 
