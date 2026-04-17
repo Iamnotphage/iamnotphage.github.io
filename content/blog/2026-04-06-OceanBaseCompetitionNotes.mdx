@@ -1,0 +1,161 @@
+---
+title: "2025年OceanBase数据库大赛-赛后复盘笔记"
+date: "2026-04-06"
+description: "简单回顾一下，方便后续查询"
+tags: ["RAG", "OceanBase", "seekDB", "cpp", "database"]
+published: true
+categories: ["RAG", "DataBase"]
+giscus_comments: true
+toc: true
+---
+
+# 2025年OceanBase数据库大赛赛后复盘
+
+> [!IMPORTANT]
+> 首先感谢队友[@wzwzwz1](https://github.com/wzwzwz1)，我们最后取得全国15名的成绩。
+
+> [!NOTE]
+> 本文记录主要思路和知识点，复习用
+
+闲来无事，复盘一下几个月前的比赛。
+
+最后比赛截止时间是2026年的1月份。
+
+这个比赛有不少大佬都是提前一年准备的，我和[@wzwzwz1](https://github.com/wzwzwz1)基本啥也不知道，懵懵懂懂就是肝。
+
+初赛是MiniOB的基本语句实现。
+
+初赛repo: [Click Here](https://github.com/Iamnotphage/MiniOB-2025)
+
+决赛repo: [Click Here](https://github.com/Iamnotphage/seekdb-2025)
+
+---
+
+决赛分两个赛题，一个是内核赛题，一个是RAG赛题。
+
+分别占比70%和30%的分数。
+
+## 内核部分
+
+简单来说在[seekdb](https://github.com/oceanbase/seekdb)这个数据库的基础上，在[MLDR英文数据集](https://hf-mirror.com/datasets/Shitao/MLDR/tree/main/mldr-v1.0-en)上，优化带标量的全文索引检索的性能。
+
+比如，优化这种类型的语句：
+
+```sql
+SELECT docid_col, MATCH(fulltext_col) AGAINST(XXX) as _score
+FROM items1
+WHERE MATCH(fulltext_col) AGAINST(XXX)
+  and base_id in XXX
+  and id < XXX
+ORDER BY _score DESC
+LIMIT XXX
+```
+
+就看这个语句执行的QPS来量化优化效果
+
+然后加上一些限制，比如单机模式，先插入数据再建立索引
+
+表的结构就是主要四个字段`id`, `base_id`, `docid_col`和`fulltext_col`
+
+---
+
+一开始QPS是14左右，最开始啥也不懂，就调整`BM25`的一些参数，QPS没啥区别。
+
+(一开始我们两也不懂用火焰图分析热点函数，就一直问AI)
+
+### 分析
+
+对于要优化的语句是固定的，主要有一个涉及到全文索引的`MATCH ... AGAINST`语句
+
+后半部分的`base_id`和`id`都是标量比较，这种普通索引，我大概知道是用`B+ Tree`，但是文本的检索就得知道全文索引了。
+
+所以不得不了解[全文索引(FTS, Full Text Search)](###全文索引)
+
+---
+
+其次就是用`EXPLAIN`语句分析和日志具体执行计划，看看走了哪些节点。
+
+总之就是磕磕碰碰 + AI发现 + 主办方讲解提示，我们应该要先做Index Merge再做BMW，再做TOP-N下推，再做缓存。
+
+所以目标的执行计划应该是
+
+```text
+TOP-N SORT #
+
+```
+
+### 全文索引
+
+全文索引主要是为了处理基于相似度的查询，不像普通索引那种精确比较。
+
+如果是`LIKE`这种语句，会导致全表扫描一遍，数据量太大就会极其低效。
+
+大概来说，一般是这种流程（不严谨）：
+
+1. 分词：中英文分词不太一样，中文常用词典和统计模型(Jieba这种)
+2. 标准化：处理一些`stop words`(比如一些通用会出现的词，`你我他的地得`)不然数据太庞大了
+3. 构建词典：所有文档的所有词构建`term id`
+4. 构建倒排表：就是`term id`到`docid`或者`Term Frequency`这种信息的映射表（参考下一小节）
+
+### 倒排索引
+
+倒排索引(Inverted Index)，是一种索引方法，存储的内容是在全文搜索下，**某个单词**在文档集合的**存储位置**的映射
+
+这是实现全文索引的一种常见的方法。
+
+举例来说就是
+
+```python
+docs = [
+    "this is first line",  # docid 0
+    "we do love coding",   # docid 1
+    "linux do is awesome"  # docid 2
+]
+```
+
+所以有`term: docid`这种倒排表(Posting List):
+
+(可能还会有词频(TF, Term Frequency))
+
+```json
+"is":  {0, 2}
+"do":  {1, 2}
+```
+
+### Index Merge
+
+索引合并(Index Merge)就是这种多个`AND`和`OR`组合的查询，分别查出来`docid`的集合之后，最后做一个合并(取交集/并集)，然后再执行后续的流程，比如`LIMIT`之类的。
+
+比赛的查询语句固定，都是多个普通索引和全文索引的`AND`，而且通过`EXPLAIN`的执行计划发现，`MATCH AGAINST`是在回表后执行的，读取行的数量巨大。正常来说`MATCH AGAINST`应该要分配到全文索引的执行节点(`FTS`)，而不是`lookup_filter`，回表之后才执行全文匹配。
+
+但是发现seekdb有支持`OR`的索引合并，对`AND`的支持不完整。
+
+所以要想办法让`AND`语句下，支持索引合并，让全文索引的结果和多个普通索引的结果取交集。
+
+到这里需要自己实现`AND`的索引合并，让`MATCH AGAINST`下推到`FTS`子节点执行。
+
+具体实现，已经忘记了。应该是优化器层面构造了`INDEX_MERGE_INTERSECT`和`INDEX_MERGE_FTS_INDEX`
+
+### WAND
+
+WAND(Weak AND)
+
+### BlockMax WAND
+
+### 构建ID列索引
+
+### 下推TOPN
+
+### 缓存
+
+## RAG部分
+
+以seekdb数据库为基础，完成RAG应用的开发以及评测。
+
+比赛方给出裁剪后的财报数据集，里面的文件都是图文混排的PDF文档，需要我们构建RAG应用，完成多模态信息理解、跨模态检索、图文关联推理、可溯源答案生产。
+
+
+
+## 参考资料
+
+[MySQL 优化之 index merge(索引合并)](https://www.cnblogs.com/digdeep/p/4975977.html)
