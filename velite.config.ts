@@ -53,7 +53,7 @@ function remarkDefaultCodeLanguage() {
   }
 }
 
-/** 两个及以上连续空行时插入可见间距：在 mdast 中插入一个会渲染为 div 的占位节点 */
+/** 段落间存在源码空行时插入可见间距：在 mdast 中插入一个会渲染为 div 的占位节点 */
 function remarkDoubleBlankSpacer() {
   return (tree: MdastRoot) => {
     const children = tree.children
@@ -64,8 +64,9 @@ function remarkDoubleBlankSpacer() {
       const curr = children[i]
       const prev = children[i + 1]
       if (!prev || !curr.position || !prev.position) continue
+      if (curr.type !== 'paragraph' || prev.type !== 'paragraph') continue
       const gap = prev.position.start.line - curr.position.end.line
-      if (gap > 2) {
+      if (gap >= 2) {
         next.push({
           type: 'paragraph',
           children: [],

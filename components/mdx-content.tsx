@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import * as runtime from 'react/jsx-runtime'
-import { ComponentProps, useCallback, useEffect, useMemo, useState } from 'react'
+import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Children, isValidElement } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -366,11 +366,188 @@ function Img({ className, alt, src, width, height, ...props }: ComponentProps<'i
   )
 }
 
+function MermaidControlButton({
+  children,
+  className,
+  label,
+  onClick,
+}: {
+  children: React.ReactNode
+  className?: string
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onPointerDown={(event) => event.stopPropagation()}
+      className={cn(
+        'flex h-8 w-8 items-center justify-center rounded-md border border-neutral-200 bg-white/95 text-neutral-700 shadow-sm transition-colors hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-neutral-700 dark:bg-neutral-900/95 dark:text-neutral-200 dark:hover:bg-neutral-800',
+        className,
+      )}
+      title={label}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MermaidSvg({ id, className, style, ...props }: ComponentProps<'svg'>) {
+  const isMermaid = typeof id === 'string' && id.startsWith('mermaid-')
+  const [scale, setScale] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const dragRef = useRef<{ pointerId: number; x: number; y: number; originX: number; originY: number } | null>(null)
+
+  const zoomBy = useCallback((delta: number) => {
+    setScale((value) => Math.min(4, Math.max(0.4, Number((value + delta).toFixed(2)))))
+  }, [])
+
+  const panBy = useCallback((x: number, y: number) => {
+    setOffset((value) => ({ x: value.x + x, y: value.y + y }))
+  }, [])
+
+  const resetView = useCallback(() => {
+    setScale(1)
+    setOffset({ x: 0, y: 0 })
+  }, [])
+
+  const copyDiagram = useCallback(async () => {
+    const svg = svgRef.current
+    if (!svg) return
+    const clone = svg.cloneNode(true) as SVGSVGElement
+    clone.style.transform = ''
+    clone.style.transformOrigin = ''
+    const ok = await copyToClipboard(clone.outerHTML)
+    setCopyStatus(ok ? 'copied' : 'error')
+  }, [])
+
+  useEffect(() => {
+    if (copyStatus === 'idle') return
+    const t = setTimeout(() => setCopyStatus('idle'), 2000)
+    return () => clearTimeout(t)
+  }, [copyStatus])
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMermaid) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      originX: offset.x,
+      originY: offset.y,
+    }
+  }, [isMermaid, offset.x, offset.y])
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    setOffset({
+      x: drag.originX + event.clientX - drag.x,
+      y: drag.originY + event.clientY - drag.y,
+    })
+  }, [])
+
+  const endDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null
+    }
+  }, [])
+
+  if (!isMermaid) {
+    return <svg id={id} className={className} style={style} {...props} />
+  }
+
+  return (
+    <div className="mermaid-diagram not-prose my-6 rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+      <div
+        className="mermaid-diagram-viewport relative cursor-grab overflow-hidden p-4 active:cursor-grabbing"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onDoubleClick={resetView}
+      >
+        <div className="absolute right-4 top-4 z-10">
+          <MermaidControlButton label={copyStatus === 'copied' ? 'Copied diagram SVG' : copyStatus === 'error' ? 'Copy failed' : 'Copy diagram SVG'} onClick={copyDiagram}>
+            {copyStatus === 'copied' ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : copyStatus === 'error' ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2M6 8h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" />
+              </svg>
+            )}
+          </MermaidControlButton>
+        </div>
+        <div className="absolute bottom-4 right-4 z-10 grid grid-cols-3 grid-rows-3 gap-1.5">
+          <MermaidControlButton className="col-start-2 row-start-1" label="Move diagram up" onClick={() => panBy(0, -60)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 15l6-6 6 6" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-1 row-start-2" label="Move diagram left" onClick={() => panBy(-60, 0)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-2 row-start-2" label="Reset diagram view" onClick={resetView}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v6h6M20 20v-6h-6M20 9a7 7 0 0 0-12.04-4.86M4 15a7 7 0 0 0 12.04 4.86" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-3 row-start-2" label="Move diagram right" onClick={() => panBy(60, 0)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 18l6-6-6-6" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-2 row-start-3" label="Move diagram down" onClick={() => panBy(0, 60)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9l-6 6-6-6" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-3 row-start-1" label="Zoom in" onClick={() => zoomBy(0.2)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14" />
+            </svg>
+          </MermaidControlButton>
+          <MermaidControlButton className="col-start-3 row-start-3" label="Zoom out" onClick={() => zoomBy(-0.2)}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+            </svg>
+          </MermaidControlButton>
+        </div>
+        <svg
+          ref={svgRef}
+          id={id}
+          className={cn('mermaid-svg select-none', className)}
+          style={{
+            ...style,
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+            transformOrigin: '0 0',
+          }}
+          {...props}
+        />
+      </div>
+    </div>
+  )
+}
+
 // MDX components mapping
 const components = {
   pre: Pre,
   figure: Figure,
   img: Img,
+  svg: MermaidSvg,
   h1: H1,
   h2: H2,
   h3: H3,

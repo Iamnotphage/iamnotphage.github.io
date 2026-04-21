@@ -210,6 +210,15 @@
   line-height: 1.2;
 }
 
+.prose .markdown-alert p:not(.markdown-alert-title) {
+  white-space: pre-line;
+}
+
+.prose .prose-double-blank-spacer {
+  height: 1rem;
+  margin: 0;
+}
+
 .prose .markdown-alert-note {
   border-left-color: oklch(0.72 0.12 240);
 }
@@ -288,6 +297,17 @@
   margin: 1.25rem 0;
 }
 
+.mermaid-diagram-viewport {
+  touch-action: none;
+}
+
+.mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  transition: transform 120ms ease-out;
+}
+
 .prose svg[data-processed='true'],
 .prose .mermaid svg {
   display: block;
@@ -299,6 +319,52 @@
 .prose .mermaid > pre,
 .prose .mermaid > code {
   max-width: 100%;
+}
+
+.dark .mermaid-diagram svg {
+  color: oklch(0.92 0 0);
+}
+
+.dark .mermaid-diagram :where(.node rect, .node circle, .node ellipse, .node polygon, .node path, .actor, .label-container, .cluster rect) {
+  fill: oklch(0.24 0 0) !important;
+  stroke: oklch(0.58 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(.edgePath .path, .flowchart-link, .messageLine0, .messageLine1, .loopLine, .activation0, .activation1, .activation2) {
+  stroke: oklch(0.82 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(marker path, .arrowheadPath, .marker) {
+  fill: oklch(0.82 0 0) !important;
+  stroke: oklch(0.82 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(text, tspan, .messageText, .actor, .labelText, .loopText, .nodeLabel) {
+  fill: oklch(0.92 0 0) !important;
+  color: oklch(0.92 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(foreignObject div, foreignObject span, foreignObject p) {
+  color: oklch(0.92 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(.edgeLabel, .edgeLabel .labelBkg, .labelBkg, .label rect) {
+  background-color: oklch(0.13 0 0) !important;
+  fill: oklch(0.13 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(.edgeLabel, .edgeLabel p, .edgeLabel span, .edgeLabel div) {
+  color: oklch(0.98 0 0) !important;
+  fill: oklch(0.98 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(.edgeLabel .label, .edgeLabel foreignObject div, .edgeLabel foreignObject p) {
+  background-color: oklch(0.13 0 0) !important;
+}
+
+.dark .mermaid-diagram :where(.edgeLabel .labelBkg, .edgeLabel rect) {
+  stroke: oklch(0.45 0 0) !important;
+  stroke-width: 1px !important;
 }
 
 /* Heading anchor links (rehype-autolink-headings behavior: wrap) */
