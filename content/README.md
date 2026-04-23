@@ -31,3 +31,11 @@ giscus_comments: true
 toc: true
 ---
 ```
+
+## 图片导入
+
+路径映射，语法如下:
+
+```markdown
+![caption](/images/)
+```
