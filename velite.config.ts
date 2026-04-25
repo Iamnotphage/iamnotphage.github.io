@@ -9,6 +9,7 @@ import remarkGemoji from 'remark-gemoji'
 import rehypeMermaid from 'rehype-mermaid'
 import { visit } from 'unist-util-visit'
 import type { Root } from 'hast'
+import { toText } from 'hast-util-to-text'
 import type { Root as MdastRoot } from 'mdast'
 
 /** 兼容单行三反引号：```foo``` -> 代码块（默认 text），避免被 mdast 解析成 inlineCode */
@@ -176,6 +177,51 @@ function rehypeGitHubRawImages() {
   }
 }
 
+function rehypeCollectMermaidSources() {
+  return (tree: Root, file?: { data?: Record<string, unknown> }) => {
+    const sources: string[] = []
+    visit(tree, 'element', (node) => {
+      const className = Array.isArray(node.properties?.className)
+        ? node.properties.className
+        : typeof node.properties?.className === 'string'
+          ? [node.properties.className]
+          : []
+
+      if (
+        (node.tagName === 'code' && className.includes('language-mermaid')) ||
+        (node.tagName === 'pre' && className.includes('mermaid'))
+      ) {
+        sources.push(toText(node, { whitespace: 'pre' }))
+      }
+    })
+
+    if (file) {
+      file.data ??= {}
+      file.data.mermaidSources = sources
+    }
+  }
+}
+
+function rehypeAttachMermaidSources() {
+  return (tree: Root, file?: { data?: Record<string, unknown> }) => {
+    const sources = Array.isArray(file?.data?.mermaidSources)
+      ? (file?.data?.mermaidSources as string[])
+      : []
+    let index = 0
+
+    visit(tree, 'element', (node) => {
+      if (node.tagName !== 'svg') return
+      if (typeof node.properties?.id !== 'string' || !node.properties.id.startsWith('mermaid-')) return
+      const source = sources[index++]
+      if (!source) return
+      node.properties = {
+        ...node.properties,
+        'data-mermaid-source': source,
+      }
+    })
+  }
+}
+
 const posts = defineCollection({
   name: 'Post',
   pattern: 'blog/**/*.mdx',
@@ -220,8 +266,10 @@ export default defineConfig({
         },
       ],
       rehypeGitHubRawImages,
+      rehypeCollectMermaidSources,
       // Mermaid 必须在 pretty-code 之前，避免先被高亮器改写
       [rehypeMermaid, { strategy: 'inline-svg' }],
+      rehypeAttachMermaidSources,
       [rehypePrettyCode, { theme: 'one-dark-pro' }],
       [
         rehypeKatex,
