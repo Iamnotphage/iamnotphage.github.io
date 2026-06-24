@@ -418,10 +418,10 @@ function MermaidSvg({ id, className, style, ...props }: ComponentProps<'svg'>) {
   const copyDiagram = useCallback(async () => {
     const svg = svgRef.current
     if (!svg) return
-    const clone = svg.cloneNode(true) as SVGSVGElement
-    clone.style.transform = ''
-    clone.style.transformOrigin = ''
-    const ok = await copyToClipboard(clone.outerHTML)
+    const source = svg.dataset.mermaidSource
+    const ok = typeof source === 'string' && source.length > 0
+      ? await copyToClipboard(source)
+      : false
     setCopyStatus(ok ? 'copied' : 'error')
   }, [])
 
@@ -473,7 +473,7 @@ function MermaidSvg({ id, className, style, ...props }: ComponentProps<'svg'>) {
         onDoubleClick={resetView}
       >
         <div className="absolute right-4 top-4 z-10">
-          <MermaidControlButton label={copyStatus === 'copied' ? 'Copied diagram SVG' : copyStatus === 'error' ? 'Copy failed' : 'Copy diagram SVG'} onClick={copyDiagram}>
+          <MermaidControlButton label={copyStatus === 'error' ? 'Copy failed' : 'Copy Mermaid source'} onClick={copyDiagram}>
             {copyStatus === 'copied' ? (
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
