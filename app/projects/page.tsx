@@ -72,6 +72,15 @@ const PROJECTS: Project[] = [
     techStack: "LangGraph, Python, REPL",
     image: "/images/projects/project6.png",
     href: "https://github.com/Iamnotphage/MT-Agent",
+  },
+  {
+    id: "7",
+    title: "GraspNet-NPU",
+    preview: "GraspNet在晟腾NPU上适配调优",
+    description: "在graspnet-baseline基础上，在 Atlas 300V Pro (Ascend 310P3) 上全链路优化的 GraspNet 推理，推理延迟平均67.9ms，test_novel数据集AP 16.73%",
+    techStack: "Python, PyTorch, NPU",
+    image: "https://avatars.githubusercontent.com/u/66550349?s=200&v=4",
+    href: "https://github.com/Iamnotphage/GraspNet-NPU",
   }
 ];
 
