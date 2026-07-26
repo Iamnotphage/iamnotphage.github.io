@@ -3,7 +3,15 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'export',
   // 静态导出无服务端，需关闭 Image 默认优化（否则会报错）
-  images: { unoptimized: true },
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+    ],
+  },
   // 若部署到 GitHub Pages 且仓库非 *.github.io，取消下一行注释并改为你的仓库名
   // basePath: '/neuromancer',
   // assetPrefix: '/neuromancer',
