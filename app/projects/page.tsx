@@ -1,15 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { ExternalLink, Github } from "lucide-react";
 import { SiteNavbar } from "@/components/site-navbar";
-import { ShiftCard } from "@/components/ui/shift-card";
+import { useTheme } from "@/components/theme-provider";
+import { buttonVariants } from "@/components/ui/button";
+import { MagicCard } from "@/components/ui/magic-card";
 import { TextureOverlay } from "@/components/ui/texture-overlay";
+import { cn } from "@/lib/utils";
 
 type Project = {
   id: string;
   title: string;
-  /** 折叠时 content 第一行展示的文案，不填则用 title */
+  /** 卡片副标题，不填则使用 title */
   preview?: string;
   description: string;
   techStack?: string;
@@ -41,7 +45,7 @@ const PROJECTS: Project[] = [
     title: "seekdb-2025",
     preview: "第五届OceanBase数据库大赛",
     description:
-      "在seekdb社区版基础上，优化带标量的全文索引检索的性能。设计并实现多模态RAG应用：支持图文混排PDF知识库的解析、多模态检索与图文关联推理，并在查询回答中提供精确可溯源的引用。",
+      "第五届OceanBase数据库大赛全国第15名。在seekdb社区版基础上，优化带标量的全文索引检索的性能。设计并实现多模态RAG应用：支持图文混排PDF知识库的解析、多模态检索与图文关联推理，并在查询回答中提供精确可溯源的引用。",
     techStack: "RAG, C++, OceanBase, seekdb",
     image: "/images/projects/project3.png",
     href: "https://github.com/Iamnotphage/seekdb-2025",
@@ -104,7 +108,7 @@ export default function ProjectsPage() {
               Things I built or tinkered with.
             </p>
 
-            <div className="flex flex-wrap justify-center gap-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...PROJECTS]
                 .sort((a, b) => Number(b.id) - Number(a.id))
                 .map((project) => (
@@ -119,85 +123,79 @@ export default function ProjectsPage() {
 }
 
 function ProjectCard({ project }: { project: Project }) {
-  const layoutId = `project-img-${project.id}`;
-
-  const topContent = (
-    <div className="rounded-md bg-neutral-200/90 dark:bg-neutral-800/90 text-neutral-900 dark:text-neutral-100 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(0,0,0,0.1),0_2px_2px_0_rgba(0,0,0,0.1),0_4px_4px_0_rgba(0,0,0,0.1),0_8px_8px_0_rgba(0,0,0,0.1)]">
-      <h3 className="text-lg font-semibold p-4 flex items-center gap-2">
-        {project.title}
-      </h3>
-    </div>
-  );
-
-  const topAnimateContent = (
-    <motion.img
-      src={project.image}
-      alt=""
-      layoutId={layoutId}
-      width={78}
-      height={100}
-      transition={{ duration: 0.3, ease: "circIn" }}
-      className="rounded-sm object-cover absolute top-1.5 right-2 shadow-lg"
-    />
-  );
-
-  const middleContent = (
-    <motion.img
-      src={project.image}
-      alt={project.title}
-      layoutId={layoutId}
-      width={150}
-      height={200}
-      transition={{ duration: 0.3, ease: "circIn" }}
-      className="rounded-sm object-cover"
-    />
-  );
-
-  const bottomContent = (
-    <div className="h-full min-h-0 flex flex-col overflow-hidden rounded-t-lg bg-neutral-100 dark:bg-neutral-800/90 border-t border-neutral-200 dark:border-neutral-700">
-      {/* 折叠时只露出一行：优先用 preview，否则用 title */}
-      <p className="font-sans text-sm font-semibold text-neutral-800 dark:text-neutral-200 pt-2.5 px-4 truncate shrink-0">
-        {project.preview ?? project.title}
-      </p>
-      {/* 悬停展开后：描述占剩余空间，技术栈+链接贴底 */}
-      <p className="font-sans text-sm font-medium text-neutral-700 dark:text-neutral-300 pt-1 px-4 flex-1 min-h-0 overflow-auto whitespace-normal">
-        {project.description}
-      </p>
-      <div className="shrink-0 mt-auto px-4 pb-3 pt-1 flex flex-col gap-2">
-        {project.techStack && (
-          <div className="flex flex-wrap gap-1.5">
-            {project.techStack.split(",").map((tech) => (
-              <span
-                key={tech.trim()}
-                className="inline-flex items-center rounded-md border border-neutral-300 dark:border-neutral-600 bg-neutral-200/80 dark:bg-neutral-700/80 px-2 py-0.5 font-sans text-xs text-neutral-700 dark:text-neutral-300"
-              >
-                {tech.trim()}
-              </span>
-            ))}
-          </div>
-        )}
-        <Link
-          href={project.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-        >
-          View project
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </Link>
-      </div>
-    </div>
-  );
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
-    <ShiftCard
-      className="bg-card dark:bg-[#1A1A1A]"
-      topContent={topContent}
-      topAnimateContent={topAnimateContent}
-      middleContent={middleContent}
-      bottomContent={bottomContent}
-    />
+    <article className="h-full min-w-0 rounded-xl shadow-sm transition-shadow duration-200 hover:shadow-lg focus-within:shadow-lg">
+      <MagicCard
+        mode="orb"
+        gradientFrom={isDark ? "#22c55e" : "#4ade80"}
+        gradientTo={isDark ? "#14b8a6" : "#2dd4bf"}
+        glowFrom={isDark ? "#22c55e" : "#86efac"}
+        glowTo={isDark ? "#14b8a6" : "#5eead4"}
+        glowOpacity={isDark ? 0.45 : 0.7}
+        className="h-full p-0"
+      >
+        <div className="flex h-full min-h-[360px] flex-col">
+          <header className="border-b border-border p-4">
+            <div className="flex items-center gap-3">
+              <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-border bg-muted shadow-sm">
+                <Image
+                  src={project.image}
+                  alt=""
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-base font-semibold text-foreground">
+                  {project.title}
+                </h2>
+                <p className="mt-1 truncate text-sm font-medium text-neutral-600 dark:text-neutral-200">
+                  {project.preview ?? project.title}
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div className="flex flex-1 flex-col p-4">
+            <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
+              {project.description}
+            </p>
+
+            {project.techStack && (
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-6" aria-label="Tech stack">
+                {project.techStack.split(",").map((tech) => (
+                  <span
+                    key={tech.trim()}
+                    className="inline-flex items-center rounded-md border border-neutral-300 bg-white/70 px-2 py-1 text-xs font-medium text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300"
+                  >
+                    {tech.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <footer className="border-t border-border p-4">
+            <Link
+              href={project.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "h-11 w-full cursor-pointer gap-2 bg-neutral-900 text-white [a]:hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-offset-2 dark:bg-white dark:text-black dark:[a]:hover:bg-neutral-200"
+              )}
+            >
+              <Github aria-hidden="true" className="size-4" />
+              View on GitHub
+              <ExternalLink aria-hidden="true" className="size-3.5 opacity-70" />
+            </Link>
+          </footer>
+        </div>
+      </MagicCard>
+    </article>
   );
 }
