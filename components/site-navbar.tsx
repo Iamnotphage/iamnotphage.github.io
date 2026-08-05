@@ -69,11 +69,6 @@ const contactLinks = [
     icon: <MaskedSvgIcon src="/icons/instagram.svg" className="h-4 w-4" title="Instagram" />,
   },
   {
-    name: "Red Note",
-    href: "https://xhslink.com/m/3pQXApovmMO",
-    icon: <MaskedSvgIcon src="/icons/xiaohongshu.svg" className="h-4 w-4" title="Red Note" />,
-  },
-  {
     name: "Steam",
     href: "https://steamcommunity.com/profiles/76561198803581331/",
     icon: <MaskedSvgIcon src="/icons/steam.svg" className="h-4 w-4" title="Steam" />,
