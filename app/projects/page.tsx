@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 type Project = {
   id: string;
+  date?: string;
   title: string;
   /** 卡片副标题，不填则使用 title */
   preview?: string;
@@ -88,6 +89,53 @@ const PROJECTS: Project[] = [
   }
 ];
 
+const LEARNING: Project[] = [
+  {
+    id: "cs231n",
+    date: "2025-04",
+    title: "CS231n",
+    preview: "Deep Learning for Computer Vision",
+    description:
+      "完成 Stanford CS231n 2024 三组课程作业，涵盖经典分类器、CNN、图像描述、Transformer、GAN 与自监督学习，并整理矩阵求导笔记。",
+    techStack: "Python, PyTorch, NumPy, Jupyter",
+    image: "/images/projects/stanford-cardinals.svg",
+    href: "https://github.com/Iamnotphage/cs231n",
+  },
+  {
+    id: "algs4",
+    date: "2025-03",
+    title: "Algorithms I & II",
+    preview: "Princeton Algorithms",
+    description:
+      "完成 Princeton Algorithms I & II 的 8 个核心实验，包括 Percolation、8 Puzzle、Kd-Tree、WordNet 与 Seam Carving。",
+    techStack: "Java, Algorithms, Data Structures",
+    image: "/images/projects/Algs4icon.png",
+    href: "https://github.com/Iamnotphage/Algs4-Labs",
+  },
+  {
+    id: "csapp",
+    date: "2024-11",
+    title: "CS:APP 3e",
+    preview: "Computer Systems Labs",
+    description:
+      "完成 Data、Bomb、Attack、Architecture 与 Cache Labs，通过 C、汇编和调试实践理解数据表示、处理器架构、程序安全与存储层次。",
+    techStack: "C, x86-64, Y86-64, GDB",
+    image: "/images/projects/csapp3e-icon.jpg",
+    href: "https://github.com/Iamnotphage/CS-APP3e",
+  },
+  {
+    id: "mit-6-1810",
+    date: "2023-09",
+    title: "MIT 6.1810",
+    preview: "Operating System Engineering",
+    description:
+      "基于 xv6 完成 Utilities、System Calls、Page Tables、Traps、Copy-on-Write 与 Multithreading 六个操作系统实验。",
+    techStack: "C, RISC-V, xv6, Operating Systems",
+    image: "/images/projects/MIT-logo.svg",
+    href: "https://github.com/Iamnotphage/MIT6.1810-Fall2022-Learning",
+  },
+];
+
 export default function ProjectsPage() {
   return (
     <div className="relative min-h-screen w-full">
@@ -101,20 +149,48 @@ export default function ProjectsPage() {
         />
         <main className="relative z-10 px-4 py-16">
           <div className="mx-auto max-w-6xl">
-            <h1 className="mb-2 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Projects
-            </h1>
-            <p className="mb-12 text-neutral-600 dark:text-neutral-400">
-              Things I built or tinkered with.
-            </p>
+            <section aria-labelledby="projects-heading">
+              <h1
+                id="projects-heading"
+                className="mb-2 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100"
+              >
+                Projects
+              </h1>
+              <p className="mb-12 text-neutral-600 dark:text-neutral-400">
+                Things I built or tinkered with.
+              </p>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...PROJECTS]
-                .sort((a, b) => Number(b.id) - Number(a.id))
-                .map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
-            </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[...PROJECTS]
+                  .sort((a, b) => Number(b.id) - Number(a.id))
+                  .map((project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+              </div>
+            </section>
+
+            <section
+              aria-labelledby="learning-heading"
+              className="mt-24 border-t border-neutral-200 pt-16 dark:border-neutral-800"
+            >
+              <h2
+                id="learning-heading"
+                className="mb-2 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100"
+              >
+                Learning
+              </h2>
+              <p className="mb-12 text-neutral-600 dark:text-neutral-400">
+                Courses I learned by building and experimenting.
+              </p>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[...LEARNING]
+                  .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+                  .map((project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+              </div>
+            </section>
           </div>
         </main>
       </div>
