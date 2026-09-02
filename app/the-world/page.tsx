@@ -78,7 +78,7 @@ export default function TheWorldPage() {
   const [tooltip, setTooltip] = useState<{ x: number; y: number; caption: string } | null>(null);
 
   return (
-    <div className="relative min-h-screen w-full">
+    <div data-the-world-page className="relative min-h-screen w-full">
       <SiteNavbar />
       {/* 背景：与 blog 一致的网格纹理 */}
       <div className="relative min-h-screen bg-white dark:bg-neutral-950">

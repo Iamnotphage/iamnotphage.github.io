@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { flushSync } from "react-dom"
 
 const THE_WORLD_PATH = "/the-world"
+const THE_WORLD_PAGE_SELECTOR = "[data-the-world-page]"
 const DURATION_PHASE1 = 500
 const DURATION_PHASE2 = 400
+const NAVIGATION_TIMEOUT = 3500
 const EASING = "ease-in-out"
 const PHASE1_STYLE_ID = "the-world-phase1-style"
 const PHASE2_STYLE_ID = "the-world-phase2-style"
@@ -37,7 +38,6 @@ function getViewportGeometry(rect: DOMRect) {
 function createInversionOverlay(
   x: number,
   y: number,
-  clipPathScale: number,
   initialState: "expanded" | "collapsed"
 ) {
   const style = document.createElement("style")
@@ -69,9 +69,11 @@ function createInversionOverlay(
     overlayRect.width,
     overlayRect.height
   )
-  const clipX = localX * clipPathScale
-  const clipY = localY * clipPathScale
-  const clipRadius = maxRadius * clipPathScale
+  // A regular DOM overlay always resolves clip-path lengths in CSS pixels.
+  // The Chromium DPR workaround is only needed by View Transition pseudos.
+  const clipX = localX
+  const clipY = localY
+  const clipRadius = maxRadius
   const expandedClipPath = `circle(${clipRadius}px at ${clipX}px ${clipY}px)`
   const collapsedClipPath = `circle(0px at ${clipX}px ${clipY}px)`
   const initialClipPath =
@@ -94,9 +96,40 @@ function waitForNextPaint() {
   })
 }
 
+function waitForTheWorldPage() {
+  const isReady = () =>
+    window.location.pathname === THE_WORLD_PATH &&
+    document.querySelector(THE_WORLD_PAGE_SELECTOR) !== null
+
+  if (isReady()) {
+    return Promise.resolve()
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const observer = new MutationObserver(() => {
+      if (!isReady()) return
+
+      window.clearTimeout(timeoutId)
+      observer.disconnect()
+      resolve()
+    })
+
+    const timeoutId = window.setTimeout(() => {
+      observer.disconnect()
+      reject(new Error("Timed out waiting for The World page to render."))
+    }, NAVIGATION_TIMEOUT)
+
+    observer.observe(document.body, { childList: true, subtree: true })
+  })
+}
+
 export function useTheWorldTransition() {
   const router = useRouter()
   const isAnimating = useRef(false)
+
+  useEffect(() => {
+    router.prefetch(THE_WORLD_PATH)
+  }, [router])
 
   const runTheWorldTransition = useCallback(
     async (buttonRect: DOMRect) => {
@@ -141,7 +174,6 @@ export function useTheWorldTransition() {
           const fallbackOverlay = createInversionOverlay(
             x,
             y,
-            clipPathScale,
             "collapsed"
           )
           phase2Style = fallbackOverlay.style
@@ -169,9 +201,9 @@ export function useTheWorldTransition() {
           phase2Animation.cancel()
           phase2Animation = null
 
-          flushSync(() => {
-            router.push(THE_WORLD_PATH)
-          })
+          const navigationReady = waitForTheWorldPage()
+          router.push(THE_WORLD_PATH)
+          await navigationReady
           await waitForNextPaint()
 
           phase2Animation = overlay.animate(
@@ -190,27 +222,8 @@ export function useTheWorldTransition() {
           return
         }
 
-        const transition = document.startViewTransition(() => {
-          flushSync(() => {
-            router.push(THE_WORLD_PATH)
-          })
-        })
-
-        await transition.ready
-
-        // Phase 2 使用真实 DOM 覆盖层。挂到 body 后按覆盖层自身的参考框换算圆心，
-        // 避免 Chrome 在 View Transition 合成期间使用偏移后的裁剪坐标原点。
-        const mountedOverlay = createInversionOverlay(
-          x,
-          y,
-          clipPathScale,
-          "expanded"
-        )
-        phase2Style = mountedOverlay.style
-        overlay = mountedOverlay.overlay
-
-        // Phase 1 直接动画 clip-path，并对 View Transition 截图应用 filter。
-        // 这条渲染路径在 Safari 中比注册自定义属性与 backdrop-filter 的组合稳定。
+        // Install the pseudo rules before starting the transition so Chromium
+        // never paints a frame with its default cross-fade animation.
         phase1Style = document.createElement("style")
         phase1Style.id = PHASE1_STYLE_ID
         phase1Style.textContent = `
@@ -246,6 +259,23 @@ export function useTheWorldTransition() {
           }
         `
         document.head.appendChild(phase1Style)
+
+        const transition = document.startViewTransition(async () => {
+          const navigationReady = waitForTheWorldPage()
+          router.push(THE_WORLD_PATH)
+          await navigationReady
+        })
+        // `ready` also rejects when the update callback fails, but
+        // `updateCallbackDone` is a separate promise and must be consumed.
+        void transition.updateCallbackDone.catch(() => undefined)
+
+        await transition.ready
+
+        // Phase 2 使用真实 DOM 覆盖层。挂到 body 后按覆盖层自身的参考框换算圆心，
+        // 避免 Chrome 在 View Transition 合成期间使用偏移后的裁剪坐标原点。
+        const mountedOverlay = createInversionOverlay(x, y, "expanded")
+        phase2Style = mountedOverlay.style
+        overlay = mountedOverlay.overlay
 
         await transition.finished
 
