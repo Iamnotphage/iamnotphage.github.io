@@ -38,6 +38,7 @@ function getViewportGeometry(rect: DOMRect) {
 function createInversionOverlay(
   x: number,
   y: number,
+  clipPathScale: number,
   initialState: "expanded" | "collapsed"
 ) {
   const style = document.createElement("style")
@@ -69,11 +70,9 @@ function createInversionOverlay(
     overlayRect.width,
     overlayRect.height
   )
-  // A regular DOM overlay always resolves clip-path lengths in CSS pixels.
-  // The Chromium DPR workaround is only needed by View Transition pseudos.
-  const clipX = localX
-  const clipY = localY
-  const clipRadius = maxRadius
+  const clipX = localX * clipPathScale
+  const clipY = localY * clipPathScale
+  const clipRadius = maxRadius * clipPathScale
   const expandedClipPath = `circle(${clipRadius}px at ${clipX}px ${clipY}px)`
   const collapsedClipPath = `circle(0px at ${clipX}px ${clipY}px)`
   const initialClipPath =
@@ -174,6 +173,7 @@ export function useTheWorldTransition() {
           const fallbackOverlay = createInversionOverlay(
             x,
             y,
+            clipPathScale,
             "collapsed"
           )
           phase2Style = fallbackOverlay.style
@@ -273,7 +273,12 @@ export function useTheWorldTransition() {
 
         // Phase 2 使用真实 DOM 覆盖层。挂到 body 后按覆盖层自身的参考框换算圆心，
         // 避免 Chrome 在 View Transition 合成期间使用偏移后的裁剪坐标原点。
-        const mountedOverlay = createInversionOverlay(x, y, "expanded")
+        const mountedOverlay = createInversionOverlay(
+          x,
+          y,
+          clipPathScale,
+          "expanded"
+        )
         phase2Style = mountedOverlay.style
         overlay = mountedOverlay.overlay
 
