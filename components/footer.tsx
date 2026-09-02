@@ -41,7 +41,6 @@ const socialLinks = [
   { label: "GitHub", href: "https://github.com/Iamnotphage", icon: "/icons/github.svg" },
   { label: "X", href: "https://x.com/iamnotphage", icon: "/icons/x.svg" },
   { label: "Instagram", href: "https://www.instagram.com/iamn0tphage/", icon: "/icons/instagram.svg" },
-  { label: "Red Note", href: "https://xhslink.com/m/3pQXApovmMO", icon: "/icons/xiaohongshu.svg" },
   { label: "Steam", href: "https://steamcommunity.com/profiles/76561198803581331/", icon: "/icons/steam.svg" },
 ];
 
