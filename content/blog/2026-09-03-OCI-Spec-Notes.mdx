@@ -1,0 +1,383 @@
+---
+title: "OCI镜像规范学习笔记"
+date: "2026-09-03"
+description: ""
+tags: ["go", "docker", "backend", "OCI"]
+published: true
+pinned: false
+categories: ["backend", "杂项"]
+giscus_comments: true
+toc: true
+---
+
+# OCI镜像规范
+
+> The toolset to pack, ship, store, and deliver content.
+
+最近实习学习了下后端这部分内容，主要学习github这个开源项目[distribution/distribution](https://github.com/distribution/distribution)
+
+这个项目是go语言写的，主要是用于使用OCI分发规范([OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/tree/main))，存储和分发容器image和其他内容的**Open Source Registry实现**
+
+OCI(Open Container Initiative)分发规范是一份“客户端如何通过 HTTP 与镜像仓库交互”的标准协议。
+
+这算是后端开发其中一个领域/分支: **云计算** / **DevOps** / **制品管理**
+
+---
+
+## OCI Specification
+
+可以先看看[OpenContainers](https://github.com/opencontainers/distribution-spec/blob/main/spec.md)这个repo的`spec.md`
+
+里面有一些名词的Definitions，比如registry、blob(Binary Large Object)、manifest、digest等，有大概概念
+
+--
+
+OCI 目前维护三项核心规范:
+
+* [Image Spec](https://github.com/opencontainers/image-spec): 规定镜像的数据结构，比如Manifest、Config、Layer、Digest
+* [Distribution Spec](https://github.com/opencontainers/distribution-spec): 镜像和制品的传输
+* [Runtime Spec](https://github.com/opencontainers/runtime-spec): 容器的配置和运行生命周期
+
+### Image Specification
+
+除了官方文档，可以简单拉一下`alpine:latest`镜像，直观一下Image Spec的结构:
+
+```bash
+docker pull --platform linux/arm64 alpine:latest
+
+docker image inspect alpine:latest
+```
+
+---
+
+OCI镜像的Spec可以先安装skopeo工具:
+
+```bash
+brew install skopeo
+
+mkdir -p oci-lab
+cd oci-lab
+
+# 拉取并保存成 OCI Layout：
+skopeo copy \
+  --override-os linux \
+  --override-arch arm64 \
+  --format oci \
+  docker://docker.io/library/alpine:latest \
+  oci:alpine-oci:latest
+```
+
+可以看看`alpine-oci/`文件夹下的内容:
+
+```text
+alpine-oci/
+├── oci-layout       # OCI Layout 版本标记
+├── index.json       # 固定入口
+└── blobs/sha256/    # 内容寻址存储
+```
+
+#### Descriptor
+
+OCI Content Descriptors描述OCI镜像内容、内容哈希、和字节数。
+
+```json
+{
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "digest": "sha256:abc...",
+  "size": 1234
+}
+```
+
+三个主要字段:
+
+1. `mediaType`: 内容的 MIME 类型
+2. `digest`: 内容的 SHA256 摘要
+3. `size`: 内容大小（字节）
+
+
+---
+
+OCI镜像通过这个descriptor组成一张 DAG:
+
+```text
+Index
+ └─ Descriptor → Manifest
+                   ├─ Descriptor → Config
+                   └─ Descriptor → Layer
+```
+
+之前alpine-oci保存为OCI镜像格式，可以查看一下:
+
+```bash
+jq '.manifests[0]' alpine-oci/index.json
+```
+
+输出就是:
+
+```json
+{
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "digest": "sha256:e7a1a92a5bfeee40966aea60f0796b0e7917cc35591542701834f03a68fa3d18",
+  "size": 1025,
+  "annotations": {
+    "org.opencontainers.image.ref.name": "latest"
+  }
+}
+```
+
+根据descriptor可以找到
+
+#### Index
+
+Image Index 主要用于组织多个平台的镜像 Manifest
+
+比如:
+
+```json
+{
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "manifests": [
+        {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:aaa...",
+            "size": 1000,
+            "platform": {
+                "os": "linux",
+                "architecture": "amd64" # 平台1
+            }
+        },
+        {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:bbb...",
+            "size": 1000,
+            "platform": {
+                "os": "linux",
+                "architecture": "arm64" # 平台2
+            }
+        }
+  ]
+}
+```
+
+核心字段:
+
+1. `schemaVersion`: 固定版本为2
+2. `mediaType`: 注意看这里第一个mediaType是`image.index`，声明这是OCI Image Index
+3. `manifests`: 内含多个`manifest`的**descriptor**
+4. `manifests[n].platform`: 第`n`个`manifest`的平台信息
+
+拉取一个镜像的时候，比如Alpine这个镜像，根据Image Index选择本机平台对应的Manifest
+
+#### Manifest
+
+Manifest 是具体某个平台镜像的内容清单
+
+主要包含后续的Config和Layers
+
+```json
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:aaa...",
+    "size": 581
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:bbb...",
+      "size": 3861821
+    }
+  ]
+}
+```
+
+核心字段:
+
+1. `schemaVersion`: 固定为 2
+2. `mediaType`: `image.manifest`表示这是 OCI Manifest
+3. `config`: 指向 Image Config 的 Descriptor
+4. `layers`: 按顺序指向 Layer Blob 的 Descriptor
+
+可以用之前拉的alpine镜像看看，在`oci-lab/alpine-oci/`目录下:
+
+```bash
+jq . index.json
+```
+
+找到输出的`manifests[0].digest`字段，然后继续查看这份`manifest`:
+
+```bash
+jq . ./blobs/sha256/<digest>
+```
+
+应该就会输出这份`manifest`的结构:
+
+```json
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:1991bd789d7184290c3cce84fd6af068b8b745e9bddf178661ce7f5ecf68135c",
+    "size": 627
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:5de55e5ef9c033997441461efe7ba23a986db059c0bb78b38f84ee0d72b99167",
+      "size": 4183037
+    }
+  ],
+  "annotations": {
+    ......
+  }
+}
+```
+
+可以看见`mediaType`是`image.manifest`
+
+然后有两个主要字段`config`和`layers`
+
+---
+
+大概结构:
+
+```text
+Manifest
+├── Config Descriptor → 环境变量、启动命令、架构等
+└── Layer Descriptors → 有顺序的一组 Layer Descriptor
+    ├── 基础层
+    ├── 依赖层
+    └── 应用层
+```
+
+#### Config
+
+Config 描述平台信息、默认运行配置、解压后 Layer 的 Diff IDs，以及构建历史。
+
+前文查看了alpine-oci的`manifest`，可以看见`config.digest`字段的哈希值
+
+进一步查看`Config`:
+
+```bash
+jq . ./blobs/sha256/1991bd789d7184290c3cce84fd6af068b8b745e9bddf178661ce7f5ecf68135c
+```
+
+得到:
+
+```json
+{
+  "architecture": "arm64",
+  "config": {
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/bin/sh"
+    ],
+    "WorkingDir": "/"
+  },
+  "created": "2026-06-16T00:01:20.474100947Z",
+  "history": [
+    {
+      "created": "2026-06-16T00:01:20.474100947Z",
+      "created_by": "ADD alpine-minirootfs-3.24.1-aarch64.tar.gz / # buildkit",
+      "comment": "buildkit.dockerfile.v0"
+    },
+    {
+      "created": "2026-06-16T00:01:20.474100947Z",
+      "created_by": "CMD [\"/bin/sh\"]",
+      "comment": "buildkit.dockerfile.v0",
+      "empty_layer": true
+    }
+  ],
+  "os": "linux",
+  "rootfs": {
+    "type": "layers",
+    "diff_ids": [
+      "sha256:b2848c02ac6ff53d265469b5b30f649f335e546a83330cd8916d54e65e640409"
+    ]
+  },
+  "variant": "v8"
+}
+```
+
+可以看出这是一个 Linux ARM64 镜像
+
+配置了环境变量`PATH=...`，启动的时候在`/`目录，执行了`/bin/sh`
+
+#### Layers
+
+Layer 是一个 tar 包，记录某一步产生的文件系统变化，可以说是一个 **File System Change Set** (文件系统变化集)
+
+文件的格式可以是 `application/vnd.oci.image.layer.v1.tar` 和 `application/vnd.oci.image.layer.v1.tar+gzip` 等
+
+这个 tar 包会记录新增、修改、删除的文件。
+
+layers可能有很多层，按顺序叠加:
+
+Layer 0 → Layer 1 → Layer 2 → 最终 rootfs
+
+---
+
+可以查看一下alpine-oci的layers结构:
+
+```bash
+tar -tzf ./blobs/sha256/5de55e5ef9c033997441461efe7ba23a986db059c0bb78b38f84ee0d72b99167 | head -10
+```
+
+输出一部分，可以看到大概的文件系统结构
+
+```text
+bin/
+bin/arch
+bin/ash
+bin/base64
+bin/bbconfig
+bin/busybox
+bin/cat
+bin/chattr
+bin/chgrp
+bin/chmod
+```
+
+> PS: 两个小区别
+> Manifest.layers[].digest
+> → 压缩后、用于存储和传输的 Blob 哈希
+> 
+> Config.rootfs.diff_ids[]
+> → 解压后的 tar 字节流哈希
+
+---
+
+类似地，当我们启动docker容器的时候，基于镜像启动一个容器，在容器内增删改文件，不会应用到镜像上。
+
+因为镜像 Layers 是共享只读的，比如基于同一个镜像启动两个容器A和B
+
+```text
+容器 A
+┌────────────────┐
+│ A 的可写层      │
+├────────────────┤
+│ 共享镜像 Layers │
+└────────────────┘
+
+容器 B
+┌────────────────┐
+│ B 的可写层      │
+├────────────────┤
+│ 共享镜像 Layers │
+└────────────────┘
+```
+
+
+1. 新增文件会直接在容器各自的可写层
+2. 删除文件会通过`whiteout`标记: 在可写层新增 `.wh.<filename>` 标记filename这个文件被删除了，实际镜像没有删除
+3. 修改文件采用`Copy on Write`: 修改文件的时候，从共享镜像Layer复制一份文件到可写层，再修改
+
+> ps: 容器可写层和 Copy-on-Write 主要是 Docker/containerd 存储驱动的运行时实现。
+
+
