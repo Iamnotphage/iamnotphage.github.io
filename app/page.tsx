@@ -4,6 +4,7 @@ import confetti from "canvas-confetti";
 import Image from "next/image";
 import { useRef } from "react";
 import { SiteNavbar } from "@/components/site-navbar";
+import { ResumeSections } from "@/components/resume-sections";
 
 const BIO_FIRST_LINE = "动物界｜脊索动物门｜哺乳纲｜灵长目｜人科｜人属｜智人";
 
@@ -12,15 +13,6 @@ const BIO_PARAGRAPHS = [
   "魔方爱好者，游戏爱好者，编程技术宅", 
   "超低浓度二次元，业余推理小说&美剧狂热",
   "后端开发学习中，偶尔玩前端，分享知识",
-];
-
-const TECH_TAGS = [
-  "FastAPI",
-  "SpringBoot",
-  "LLM",
-  "Next.js",
-  "Linux",
-  "Docker",
 ];
 
 export default function Home() {
@@ -73,8 +65,8 @@ function MainContent() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 py-16">
-      <main className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center px-5 pb-20 pt-16 sm:px-6">
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
         <button
           ref={avatarRef}
           type="button"
@@ -113,18 +105,8 @@ function MainContent() {
           ))}
         </div>
 
-        {/* 技术栈 tag */}
-        <div className="mt-10 flex flex-wrap justify-center gap-2">
-          {TECH_TAGS.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-300"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      </main>
+        <ResumeSections />
+      </div>
     </div>
   );
 }

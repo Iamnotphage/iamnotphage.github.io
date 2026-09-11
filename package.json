@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "velite && next dev",
+    "github:refresh": "node tools/refresh-github-activity.mjs",
+    "prebuild": "npm run github:refresh",
     "build": "velite build && next build",
     "start": "next start",
     "lint": "eslint",
