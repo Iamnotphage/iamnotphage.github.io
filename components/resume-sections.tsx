@@ -13,14 +13,14 @@ type ResumeEntry = {
 const WORK_EXPERIENCE: ResumeEntry[] = [
   {
     name: "ByteDance",
-    description: "Intern",
+    description: "Agent Backend Development Intern",
     logo: "/icons/organizations/bytedance.svg",
     logoSize: 28,
     start: { dateTime: "2026-07", label: "Jul 2026" },
   },
   {
     name: "Huawei",
-    description: "Software Engineer Intern",
+    description: "Algorithm Application Development Intern",
     logo: "/icons/organizations/huawei.svg",
     logoSize: 28,
     start: { dateTime: "2024-07", label: "Jul 2024" },
